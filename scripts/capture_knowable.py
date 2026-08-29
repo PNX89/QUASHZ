@@ -112,6 +112,37 @@ def present(rows: str, observation: str) -> bool:
     return any(line.startswith(f"{observation},") for line in rows.splitlines())
 
 
+def refuse_a_reply_that_is_not_from_the_archive(
+    header: str, series: str, probe_date: datetime.date
+) -> None:
+    """The one check standing between this bisection and a confident fiction.
+
+    IT LIVES IN A FUNCTION OF ITS OWN BECAUSE OF WHERE IT USED TO LIVE. This was four lines
+    inside `recover`, reachable only by making a network request, so the only way to see it
+    reject anything was to point the script at the wrong host and watch. The committed fixture
+    beside this file was captured for exactly that purpose and then read by nothing: the comment
+    that writes it says the offline suite asserts the guard rejects it, and no test imported
+    this module at all. A guard nobody has watched refuse is a guard nobody has tested.
+
+    What it detects: `fredgraph.csv` accepts `vintage_date`, ignores it, and answers 200 with
+    today's numbers under a bare `observation_date,SERIES` header. The archive answers under
+    `observation_date,SERIES_YYYYMMDD`. The suffix is the whole difference between a vintage and
+    a fiction, and it is the reason a wrong-host bisection concludes that every observation was
+    knowable on its own reference date.
+
+    What it does NOT detect, said here rather than assumed: a calendar date that is not a real
+    vintage also answers 200, serving the nearest preceding real vintage under a header that
+    ECHOES the date asked for. This check passes on that reply, which is why the column is named
+    `probe_date` and why a bracket is accepted only when two probes return different content.
+    """
+    if header != f"observation_date,{series}_{probe_date:%Y%m%d}":
+        raise SystemExit(
+            f"the archive returned the header {header!r} for a {probe_date} probe. A bare series "
+            f"id means the request reached the host that ignores the vintage and answers with "
+            f"today's data, and every result from here would be a fiction with a 200 beside it"
+        )
+
+
 def recover(series: str, observation: str, first: str, last: str) -> dict[str, object]:
     """Bisect for the earliest probe date at which the observation is served at all."""
     lo = datetime.date.fromisoformat(first)
@@ -120,12 +151,7 @@ def recover(series: str, observation: str, first: str, last: str) -> dict[str, o
 
     header, rows, digest = probe(series, observation, hi.isoformat())
     probes += 1
-    if header != f"observation_date,{series}_{hi:%Y%m%d}":
-        raise SystemExit(
-            f"the archive returned the header {header!r} for a {hi} probe. A bare series id "
-            f"means the request reached the host that ignores the vintage and answers with "
-            f"today's data, and every result from here would be a fiction with a 200 beside it"
-        )
+    refuse_a_reply_that_is_not_from_the_archive(header, series, hi)
     if not present(rows, observation):
         raise SystemExit(f"{series} {observation} is absent even from the {hi} vintage")
 
@@ -207,8 +233,9 @@ def main() -> int:
         writer.writerows(recovered)
 
     # THE NEGATIVE FIXTURE, committed rather than described. This is what the wrong host returns
-    # for a request carrying a vintage: HTTP 200, a bare header, and current values. The offline
-    # suite asserts the guard rejects it, which it cannot do against a paragraph.
+    # for a request carrying a vintage: HTTP 200, a bare header, and current values. It is read
+    # by tests/test_wrong_host.py, which feeds this exact first line to the guard and requires
+    # a refusal. The claim that it was read used to be made here and be false.
     header, rows, _ = probe("GDPC1", "2024-01-01", "2024-04-24", url=WRONG_HOST)
     (FIXTURES / "wrong_host_ignores_the_vintage.csv").write_text(
         f"{header}\n{rows}\n", encoding="utf-8"
