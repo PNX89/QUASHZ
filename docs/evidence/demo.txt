@@ -1,0 +1,35 @@
+43 quarterly publication dates recovered from the archive, by bisection, never assumed.
+
+How long after the day it is labelled each figure was first served:
+
+  41 of 43 between 115 and 121 days
+  and one at 150 days: 2018-10-01, served 2019-02-28
+  and one at 175 days: 2025-07-01, served 2025-12-23
+
+  A pipeline using the average of those would be right most of the time,
+  and a quarter wrong twice in ten years.
+
+Asked on 2024-04-24, which quarterly figure could a decision have used?
+
+  the quarter labelled 2024-01-01   NOT UNTIL 2024-04-25
+
+  Reading it by its label would have used a number that did not exist for
+  another day. That is one row. Measured across the whole frame:
+
+  2661 of 2808 decision dates (94.8%) would read a figure
+  the publisher had not published, by up to 175 days.
+
+And what the frame does about it:
+
+  2828 days a model could have run on
+  2808 days it could have learned from
+  20 days where a decision is possible and supervision is not
+
+  The last figure is not a defect to be fixed. It is every day near the present.
+
+  The last row admitted is 2026-07-24, deciding on a yield published
+  2026-07-23 and judged on an outcome dated 2026-08-20.
+  The quarterly figure it may read is already 388 days old.
+
+  The first row refused after it is 2026-08-21, and the reason is not that a
+  column was null. It is that the answer had not happened yet.

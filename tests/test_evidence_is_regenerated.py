@@ -74,17 +74,26 @@ def test_ci_runs_every_harness_and_diffs_the_whole_directory() -> None:
         assert f"scripts/{script.name}" in executed, f"CI never runs scripts/{script.name}"
 
 
-def test_the_capture_scripts_are_not_run_by_a_required_job() -> None:
+def test_no_script_that_reaches_the_network_is_run_by_a_required_job() -> None:
     """The other direction, and it is just as important.
 
-    The capture scripts reach live publishers. A required job that depends on somebody else's
-    availability is a job that goes red for reasons nobody here caused, and the response to that
-    is to stop reading red builds. They belong to a manual workflow that is allowed to fail.
+    A required job that depends on somebody else's availability goes red for reasons nobody here
+    caused, and the response to that is to stop reading red builds. The scripts that reach live
+    publishers belong to a manual workflow that is allowed to fail.
+
+    ASKS WHAT THE SCRIPT IMPORTS, AND THE FIRST VERSION ASKED WHAT IT WAS CALLED. It matched
+    `capture_*.py` and went red when `capture_evidence.py` arrived, which captures the demo's
+    own stdout and reaches nothing at all. A rule keyed on a filename is a rule about a naming
+    habit; this one is about the property that actually matters.
     """
     executed = run_commands()
-    for script in sorted((REPO / "scripts").glob("capture_*.py")):
+    reaches_network = ("urllib.request", "import requests", "httpx", "urlopen")
+    for script in sorted((REPO / "scripts").glob("*.py")):
+        text = script.read_text(encoding="utf-8")
+        if not any(marker in text for marker in reaches_network):
+            continue
         assert f"scripts/{script.name}" not in executed, (
-            f"scripts/{script.name} reaches a live publisher and is run by a workflow. Every "
+            f"scripts/{script.name} reaches a live publisher and a workflow runs it. Every "
             f"required job must run from the committed corpus"
         )
 
