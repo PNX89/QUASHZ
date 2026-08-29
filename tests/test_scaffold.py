@@ -85,6 +85,36 @@ def test_mypy_covers_every_directory_holding_python() -> None:
     assert missing == set(), f"these directories hold Python and mypy does not read them: {missing}"
 
 
+def test_the_suite_that_needs_the_instruments_is_run_by_ci() -> None:
+    """The other half of splitting the suite, and the half that is easy to forget.
+
+    Moving the tests that need scikit-learn and DuckDB out of `testpaths` makes the offline
+    claim true and makes those tests trivially skippable: they are now in a directory nothing
+    runs unless something says so. So the workflow is parsed and the command that runs them is
+    asserted, rather than the directory merely existing.
+    """
+    import yaml
+
+    workflow = yaml.safe_load(
+        (REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    )
+    executed = "\n".join(
+        line
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+        if isinstance(step.get("run"), str)
+        for line in step["run"].splitlines()
+        if not line.strip().startswith("#")
+    )
+    assert (REPO / "tests_verdict").is_dir()
+    collected = sorted(path.name for path in (REPO / "tests_verdict").glob("test_*.py"))
+    assert collected, "tests_verdict is empty, so the split bought nothing"
+    assert "pytest tests_verdict" in executed, (
+        f"CI never runs tests_verdict, so {collected} are collected by nobody and the split "
+        f"turned a slow suite into an unrun one"
+    )
+
+
 def test_no_third_party_binary_is_tracked() -> None:
     """A vendored engine binary in git history is 100 MB nobody can remove later."""
     tracked = {path.name for path in REPO.rglob("*") if ".git" not in path.parts and path.is_file()}
@@ -101,7 +131,10 @@ def test_the_offline_suite_imports_nothing_from_the_verdict_or_contract_groups()
     so it is asserted rather than intended, from the first commit rather than after the first
     time somebody notices.
     """
-    heavy = ("sklearn", "duckdb", "hypothesis", "numpy", "soda")
+    # Hypothesis is deliberately NOT in this list. It is a test tool that ships in the dev
+    # group beside pytest, and it computes no part of the verdict. Everything here is something
+    # the verdict is measured WITH, which is the line the dependency groups draw.
+    heavy = ("sklearn", "duckdb", "numpy", "soda")
     offenders: list[str] = []
     for path in sorted((REPO / "tests").glob("test_*.py")):
         for line in path.read_text(encoding="utf-8").splitlines():
