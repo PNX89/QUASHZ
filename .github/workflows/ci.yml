@@ -132,8 +132,13 @@ jobs:
       # command a stranger is given does.
       - name: run the demo exactly as the README tells a reader to
         run: uv run python examples/what_was_knowable.py
+      # THE CAPTURE NEEDS THE INSTRUMENTS AND THE DEMO DOES NOT, which is not a contradiction
+      # and is worth the extra line. The step above runs the demo exactly as a reader is told
+      # to, with the default install, and that is the claim. This step also counts the tests in
+      # BOTH suites for the facts file, and collecting tests_verdict imports numpy. Running it
+      # without the group passed locally, where a warm virtualenv still had it, and failed here.
       - name: capture what it printed
-        run: uv run python scripts/capture_evidence.py
+        run: uv run --group verdict python scripts/capture_evidence.py
       - name: fail if the captured output has changed
         run: |
           git status --porcelain docs/evidence/demo.txt
