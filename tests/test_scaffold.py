@@ -116,10 +116,28 @@ def test_the_suite_that_needs_the_instruments_is_run_by_ci() -> None:
 
 
 def test_no_third_party_binary_is_tracked() -> None:
-    """A vendored engine binary in git history is 100 MB nobody can remove later."""
-    tracked = {path.name for path in REPO.rglob("*") if ".git" not in path.parts and path.is_file()}
-    for name in ("clickhouse", "duckdb_cli", "soda"):
-        assert name not in tracked, f"a {name} binary is in the tree"
+    """A vendored engine binary in git history is a hundred megabytes nobody can remove later.
+
+    ASKS GIT, AND THE FIRST VERSION WALKED THE WORKING TREE. It said "tracked" in its name and
+    scanned every file on disk, so it went red the moment `.venv` contained a `soda` executable:
+    a virtualenv is not the repository, and a test that cannot tell the difference reports a
+    defect that does not exist while proving nothing about what was committed.
+    """
+    import subprocess
+
+    listed = subprocess.run(
+        ["git", "ls-files"], capture_output=True, text=True, cwd=REPO, check=True
+    ).stdout.split()
+    names = {pathlib.PurePosixPath(entry).name for entry in listed}
+    for binary in ("clickhouse", "duckdb_cli", "soda"):
+        assert binary not in names, f"a {binary} binary is committed"
+
+    big = [
+        entry
+        for entry in listed
+        if (REPO / entry).exists() and (REPO / entry).stat().st_size > 5_000_000
+    ]
+    assert big == [], f"these committed files are over five megabytes: {big}"
 
 
 def test_the_offline_suite_imports_nothing_from_the_verdict_or_contract_groups() -> None:

@@ -1,0 +1,11 @@
+type: duckdb
+name: candidate
+connection:
+  # `database`, NOT `path`. The plugin infers which connection class to build from the key it
+  # finds, and anything else raises "Could not infer DuckDB connection type from input", which
+  # is a clear message once you know it is about the key rather than about the value.
+  #
+  # The path is relative, so this file is committed without a machine on it and the harness that
+  # runs it has to be run from the repository root. `target/` is not tracked.
+  database: "target/candidate.duckdb"
+  read_only: true
