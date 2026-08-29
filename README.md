@@ -8,6 +8,10 @@ because no data pipeline has a target.**
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+![A real run: 43 recovered publication dates, which quarterly figure a decision on 24 April 2024
+could honestly have used, and the twenty days at the end of the corpus where a decision is
+possible and supervision is not.](docs/demo.svg)
+
 Of the days in this corpus where a model could have RUN, 2,828 of them, only 2,808 are days it
 could have LEARNED from. The other 20 are not a data quality problem to be fixed. They are the
 days nearest the present, where a decision is possible and supervision is not, and a build that
@@ -167,6 +171,44 @@ It recovers publication dates for one quarterly series and two daily ones, back 
 4,123 rows refused in total, 4,103 are refused for exactly that reason: they fall before the
 first recovered publication date, and inventing an earlier one is precisely the mistake this
 exists to catch.
+
+<!-- toolset:start -->
+
+Part of the Q...Z toolset, all of it designing for the failure that does not announce itself:
+
+- [QUACKZ](https://github.com/PNX89/QUACKZ), deflating a backtest that only looks good because
+  it was picked out of two hundred.
+- [QUOTEZ](https://github.com/PNX89/QUOTEZ), market data an agent can read and cannot act on.
+- [QUELLZ](https://github.com/PNX89/QUELLZ), measuring what prompt-injection containment costs
+  in utility as well as in attack rate.
+- [QUIDZ](https://github.com/PNX89/QUIDZ), refusing the outbound payment that would have gone
+  out twice.
+- [QUESTZ](https://github.com/PNX89/QUESTZ), stopping a scraper before it writes a CSV from a
+  page that changed shape.
+- [QUIZZ](https://github.com/PNX89/QUIZZ), answering what a statistic said at the time, and
+  refusing when it cannot.
+- [QUARANTINEZ](https://github.com/PNX89/QUARANTINEZ), treating an outcome the venue never
+  confirmed as terminal rather than as a retry.
+- [QUENCHZ](https://github.com/PNX89/QUENCHZ), deciding in the open what a tool server gets free
+  while it is still somebody's subprocess.
+- [QUILTZ](https://github.com/PNX89/QUILTZ), proving infrastructure code wrong without a cloud
+  account, and saying what that cannot show.
+- [QUAYZ](https://github.com/PNX89/QUAYZ), telling a crash loop from an OOMKill, and naming the
+  failure that no single field finds.
+- [QUARRYZ](https://github.com/PNX89/QUARRYZ), keeping every version a statistical office
+  published, and failing the build when it quietly issues another.
+- QUASHZ, this one: refusing a row whose outcome had not been decided yet when the decision
+  would have been made.
+
+**On QUACKZ.** QUACKZ owns the block resampling machinery in this set, and the build plan for
+this repository said to import it. That turned out to be wrong for a reason worth stating: a
+stationary bootstrap draws geometric blocks with replacement to build a sampling distribution,
+and what is needed here is contiguous blocks without replacement to destroy a pairing while
+leaving the target's own serial structure intact. Using one for the other would run, and every
+null it produced would be of the wrong thing. The rule survives as a test asserting this
+repository names no statistic that one owns.
+
+<!-- toolset:end -->
 
 ## Development
 
