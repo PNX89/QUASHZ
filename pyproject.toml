@@ -64,7 +64,7 @@ filterwarnings = ["error"]
 # A directory joins this list with its first Python file. Naming one mypy cannot find is an
 # error rather than a no-op, so the list cannot be written in advance, and tests/test_scaffold.py
 # fires on the commit that adds the first file to a directory that is missing from it.
-files = ["src", "tests", "tests_verdict", "scripts"]
+files = ["src", "tests", "tests_verdict", "scripts", "examples"]
 strict = true
 
 [[tool.mypy.overrides]]
