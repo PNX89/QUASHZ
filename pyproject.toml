@@ -66,3 +66,18 @@ filterwarnings = ["error"]
 # fires on the commit that adds the first file to a directory that is missing from it.
 files = ["src", "tests", "tests_verdict", "scripts"]
 strict = true
+
+[[tool.mypy.overrides]]
+# scikit-learn ships no py.typed marker at 1.9.0, verified rather than assumed: the file is
+# absent from the installed package. numpy DOES ship one and is fully checked, so this override
+# names the four scikit-learn modules that are actually imported rather than switching off
+# import checking for everything. The alternative, scikit-learn-stubs, is a separately versioned
+# third-party project for four call sites.
+module = [
+    "sklearn.ensemble",
+    "sklearn.linear_model",
+    "sklearn.metrics",
+    "sklearn.pipeline",
+    "sklearn.preprocessing",
+]
+ignore_missing_imports = true

@@ -44,6 +44,12 @@ class Row:
     level: float
     slope: float
     fx: float
+    #: The most recent quarterly figure the publisher had SERVED by this morning, and how old
+    #: the period it describes already was. The age is a feature in its own right: a model given
+    #: a number without being told how stale it is cannot tell a fresh release from a figure
+    #: five months old, and on this series the difference is a quarter of a year.
+    gdp: float
+    gdp_age_days: int
     outcome_date: datetime.date | None
     outcome: int | None
 
@@ -75,7 +81,7 @@ class Refusal:
 REASONS = (
     "outcome not decidable at the decision date",
     "no yield published by the decision date",
-    "no exchange rate published by the decision date",
+    "no quarterly figure published by the decision date",
 )
 
 
@@ -89,6 +95,21 @@ def build(horizon: int = HORIZON) -> tuple[list[Row], list[Refusal]]:
     yields = corpus.fed("DGS10")
     slopes = corpus.fed("T10Y2Y")
     rates = corpus.fed("DEXUSEU")
+    quarterly = corpus.fed("GDPC1")
+
+    # WHEN EACH QUARTERLY FIGURE WAS ACTUALLY SERVED, recovered from the archive. The frame
+    # cannot start before the first of these, because before it there is no honest answer to
+    # what was knowable, and guessing one is the mistake this repository is about. That bound is
+    # why the frame covers the recovered window rather than every day the yields exist.
+    published = {
+        datetime.date.fromisoformat(row["observation"]): datetime.date.fromisoformat(
+            row["knowable_from"]
+        )
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    }
+    if not published:
+        raise ValueError("no quarterly publication date was recovered, so no frame is honest")
 
     lag = datetime.timedelta(days=YIELD_RELEASE_LAG_DAYS)
     trading_days = sorted(set(yields) & set(slopes))
@@ -107,6 +128,21 @@ def build(horizon: int = HORIZON) -> tuple[list[Row], list[Refusal]]:
             )
             continue
         latest = usable[-1]
+
+        # The most recent quarterly figure SERVED by this morning, which is routinely two
+        # quarters behind the one whose label has already passed.
+        served = [label for label, when in published.items() if when <= decision_date]
+        if not served:
+            refusals.append(
+                Refusal(
+                    decision_date,
+                    REASONS[2],
+                    "no quarterly figure had been published yet at this date, and the archive "
+                    "was only bisected back to the first one recovered",
+                )
+            )
+            continue
+        newest = max(served)
 
         index = position[latest]
         outcome_index = index + horizon
@@ -141,6 +177,8 @@ def build(horizon: int = HORIZON) -> tuple[list[Row], list[Refusal]]:
                 level=yields[latest],
                 slope=slopes[latest],
                 fx=rates[decision_date],
+                gdp=quarterly[newest],
+                gdp_age_days=(decision_date - newest).days,
                 outcome_date=outcome_date,
                 outcome=outcome,
             )

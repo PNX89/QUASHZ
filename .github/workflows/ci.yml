@@ -49,3 +49,30 @@ jobs:
           enable-cache: true
       - name: run the tests that need the instruments
         run: uv run --group verdict pytest tests_verdict -q
+
+  # The verdict itself, re-issued rather than trusted. A committed measurement nobody regenerates
+  # is a claim about a laptop, and this one carries a hash that a downstream repository checks.
+  #
+  # ONE THREAD, and the harness sets it before scikit-learn is imported. Measured on this frame:
+  # 5.54 seconds per scoring with the default pool against 0.23 pinned to one thread, for an
+  # identical AUC to four decimal places. The problem is small enough that thread coordination
+  # costs more than the work.
+  verdict-issued:
+    name: the verdict, issued again from the committed corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+      - name: issue the verdict
+        run: uv run --group verdict python scripts/measure_verdict.py
+      - name: fail if any measured outcome or transcript has changed
+        run: |
+          # The whole directory, not just the summary. The transcript is what a reader reads,
+          # and a correct summary beside a transcript describing a run that no longer happens is
+          # exactly the drift this job exists to catch. `git status` as well as `git diff`,
+          # because a diff says nothing about a file the harness newly created.
+          git status --porcelain docs/evidence/verdict
+          git diff --exit-code -- docs/evidence/verdict
+          test -z "$(git status --porcelain docs/evidence/verdict)"
