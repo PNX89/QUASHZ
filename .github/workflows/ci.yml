@@ -76,3 +76,23 @@ jobs:
           git status --porcelain docs/evidence/verdict
           git diff --exit-code -- docs/evidence/verdict
           test -z "$(git status --porcelain docs/evidence/verdict)"
+
+  # The vendor contract, run in both directions. A contract that has never been seen to fail is
+  # a contract nobody has tested, and the commonest way for one to be useless is to be
+  # satisfiable by any file at all. Its own job because it needs Soda, which the offline suite
+  # deliberately does not.
+  contract:
+    name: the contract a vendor is handed, and what it does to a bad file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+      - name: verify the admitted frame and then a broken copy of it
+        run: uv run --group verdict --group contract python scripts/measure_contract.py
+      - name: fail if any measured outcome or transcript has changed
+        run: |
+          git status --porcelain docs/evidence/contract
+          git diff --exit-code -- docs/evidence/contract
+          test -z "$(git status --porcelain docs/evidence/contract)"

@@ -1,0 +1,27 @@
+$ soda contract verify   # the admitted frame
+# Summary:
+|----------------|---|----|
+| Checks         | 5 |    |
+| Passed         | 5 | ✅ |
+| Failed         | 0 | ✅ |
+| Warned         | 0 | ✅ |
+| Not Evaluated  | 0 | ✅ |
+| Excluded       | 0 | ✅ |
+| Runtime Errors | 0 | ✅ |
+
+
+$ soda contract verify   # the same frame with a vendor's mistake in it
+#   one decision date duplicated, one slope removed
+# Summary:
+|----------------|---|----|
+| Checks         | 5 |    |
+| Passed         | 3 | ✅ |
+| Failed         | 2 | ❌ |
+| Warned         | 0 | ✅ |
+| Not Evaluated  | 0 | ✅ |
+| Excluded       | 0 | ✅ |
+| Runtime Errors | 0 | ✅ |
+
+
+This is the artefact handed to the vendor. Their engineer runs the same two commands against
+their own copy and gets the same table, which is what an argument about a data problem needs.
