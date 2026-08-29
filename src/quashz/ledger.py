@@ -31,11 +31,14 @@ select
     level,
     slope,
     fx,
+    gdp,
+    gdp_age_days,
     outcome
 from candidate
 where outcome is not null
   and latest_yield_date < decision_date
   and outcome_date > latest_yield_date
+  and gdp_age_days >= 90
 """
 
 
@@ -83,7 +86,7 @@ def by_reason(connection: Any) -> list[tuple[str, int]]:
     return [(str(reason), int(count)) for reason, count in found]
 
 
-Admitted = tuple[datetime.date, float, float, float, int]
+Admitted = tuple[datetime.date, float, float, float, float, int, int]
 
 
 def admit(connection: Any, rows: Iterable[Any]) -> list[Admitted]:
@@ -91,6 +94,12 @@ def admit(connection: Any, rows: Iterable[Any]) -> list[Admitted]:
 
     The predicate is the artefact, not this function. It is one statement, it is printed by the
     verdict, and a reviewer can paste it into their own DuckDB against the same table.
+
+    The `gdp_age_days >= 90` clause is the one worth arguing with, and it is deliberately in the
+    SQL rather than in Python. A quarterly figure is never served in under 115 days in this
+    archive, so a row claiming a fresher one is not a fresh row: it is a row built from a
+    publication date that was assumed rather than recovered, and the predicate refuses it
+    instead of trusting the pipeline that produced it.
     """
     connection.execute(
         """
@@ -100,6 +109,8 @@ def admit(connection: Any, rows: Iterable[Any]) -> list[Admitted]:
             level double not null,
             slope double not null,
             fx double not null,
+            gdp double not null,
+            gdp_age_days integer not null,
             outcome_date date,
             outcome integer
         )
@@ -112,14 +123,18 @@ def admit(connection: Any, rows: Iterable[Any]) -> list[Admitted]:
             row.level,
             row.slope,
             row.fx,
+            row.gdp,
+            row.gdp_age_days,
             row.outcome_date,
             row.outcome,
         )
         for row in rows
     ]
     if payload:
-        connection.executemany("insert into candidate values (?, ?, ?, ?, ?, ?, ?)", payload)
+        connection.executemany("insert into candidate values (?, ?, ?, ?, ?, ?, ?, ?, ?)", payload)
     return [
-        (date, float(level), float(slope), float(fx), int(outcome))
-        for date, level, slope, fx, outcome in connection.execute(ADMISSION_SQL).fetchall()
+        (date, float(level), float(slope), float(fx), float(gdp), int(age), int(outcome))
+        for date, level, slope, fx, gdp, age, outcome in connection.execute(
+            ADMISSION_SQL
+        ).fetchall()
     ]

@@ -1,0 +1,91 @@
+{
+  "admitted": 2808,
+  "refused": 4123,
+  "rejection_rate": 0.594864,
+  "refusals_by_reason": [
+    {
+      "reason": "no quarterly figure published by the decision date",
+      "rows": 4103
+    },
+    {
+      "reason": "outcome not decidable at the decision date",
+      "rows": 20
+    }
+  ],
+  "features": [
+    "level",
+    "slope",
+    "fx",
+    "gdp",
+    "gdp_age_days"
+  ],
+  "horizon_trading_days": 20,
+  "embargo_trading_days": 40,
+  "ensemble": 200,
+  "repeats_per_effect": 20,
+  "threshold": 0.95,
+  "provenance_sha256": "d8d37f0c60ad66504d1aa39badf79d8350456d8d2b62e337a36c59b51a323b63",
+  "verdicts": [
+    {
+      "estimator": "logistic regression",
+      "observations": 2808,
+      "effective_observations": 140,
+      "observed_auc": 0.620644,
+      "ensemble_size": 200,
+      "block_length": 20,
+      "rank_in_the_null": 0,
+      "empirical_p": 0.004975,
+      "null_median": 0.496443,
+      "null_max": 0.594125,
+      "detection_effects": [
+        0.05,
+        0.1,
+        0.2,
+        0.4,
+        0.8,
+        1.6
+      ],
+      "detection_rates": [
+        0.0,
+        0.0,
+        0.0,
+        0.45,
+        1.0,
+        1.0
+      ],
+      "minimum_detectable_effect": 0.8,
+      "detected": true
+    },
+    {
+      "estimator": "histogram gradient boosting",
+      "observations": 2808,
+      "effective_observations": 140,
+      "observed_auc": 0.58855,
+      "ensemble_size": 200,
+      "block_length": 20,
+      "rank_in_the_null": 1,
+      "empirical_p": 0.00995,
+      "null_median": 0.494522,
+      "null_max": 0.589378,
+      "detection_effects": [
+        0.05,
+        0.1,
+        0.2,
+        0.4,
+        0.8,
+        1.6
+      ],
+      "detection_rates": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.7,
+        1.0
+      ],
+      "minimum_detectable_effect": 1.6,
+      "detected": true
+    }
+  ],
+  "estimators_disagree": false
+}

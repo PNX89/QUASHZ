@@ -1,0 +1,30 @@
+$ uv run --group verdict python scripts/measure_verdict.py
+
+ADMITTED   2808 rows
+REFUSED    4123 rows, 59.5% of everything considered
+              4103  no quarterly figure published by the decision date
+                20  outcome not decidable at the decision date
+
+The null is 200 circular block permutations at a block length of 20 trading days,
+so the finest p-value it can report is 1 in 201. The sweep plants an effect at 0.05, 0.1, 0.2, 0.4, 0.8, 1.6 standard deviations,
+20 times each, and the two share one yardstick.
+
+--- logistic regression ---
+  observed AUC 0.6206, rank 0 of 200, empirical p 0.0050
+  the null runs to 0.5941 at its maximum and sits at 0.4964 in the middle
+  smallest effect found at the declared rate: 0.8 standard deviations
+  detection rates: 0.05=0.00, 0.1=0.00, 0.2=0.00, 0.4=0.45, 0.8=1.00, 1.6=1.00
+  2808 rows, which at a 20 day horizon is 140 effectively independent observations
+
+--- histogram gradient boosting ---
+  observed AUC 0.5886, rank 1 of 200, empirical p 0.0100
+  the null runs to 0.5894 at its maximum and sits at 0.4945 in the middle
+  smallest effect found at the declared rate: 1.6 standard deviations
+  detection rates: 0.05=0.00, 0.1=0.00, 0.2=0.00, 0.4=0.00, 0.8=0.70, 1.6=1.00
+  2808 rows, which at a 20 day horizon is 140 effectively independent observations
+
+provenance d8d37f0c60ad66504d1aa39badf79d8350456d8d2b62e337a36c59b51a323b63
+
+The controls bound what THIS procedure could have detected on THIS frame at the effect sizes swept.
+They are not evidence that there is no relationship, and they correct for no multiple comparison:
+an empirical null says where one score sits under one hypothesis, and says nothing about how many were tried.

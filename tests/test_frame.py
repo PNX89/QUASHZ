@@ -68,28 +68,52 @@ def test_every_admitted_row_has_an_outcome_that_had_already_happened() -> None:
         )
 
 
-def test_the_only_refusals_are_the_ones_the_horizon_makes_inevitable() -> None:
-    """A refusal count that is not explained by the horizon is a refusal nobody has looked at."""
+def test_every_refusal_is_explained_by_one_of_the_two_boundaries() -> None:
+    """A refusal nobody can account for is a refusal nobody has looked at.
+
+    There are exactly two boundaries here and they sit at opposite ends of the corpus. At the
+    START, no quarterly figure had been published yet at a date the archive covers, because the
+    bisection was only run back to 2015 and inventing an earlier publication date is the mistake
+    this repository exists to refuse. At the END, the outcome has not happened yet.
+    """
     rows, refusals = frame.build()
     assert refusals, "nothing was refused at all, so the ledger has nothing in it to argue with"
     reasons = {refusal.reason for refusal in refusals}
-    assert reasons == {frame.REASONS[0]}, f"an unexplained refusal reason appeared: {reasons}"
-    assert len(refusals) <= frame.HORIZON + 2, (
-        f"{len(refusals)} rows were refused for an undecidable outcome, which is more than a "
+    assert reasons == {frame.REASONS[0], frame.REASONS[2]}, (
+        f"an unexplained refusal reason appeared: {reasons}"
+    )
+
+    undecidable = [r for r in refusals if r.reason == frame.REASONS[0]]
+    unpublished = [r for r in refusals if r.reason == frame.REASONS[2]]
+    assert len(undecidable) <= frame.HORIZON + 2, (
+        f"{len(undecidable)} rows were refused for an undecidable outcome, which is more than a "
         f"{frame.HORIZON} day horizon at the end of the corpus can account for"
     )
-    assert all(refusal.decision_date > rows[-1].decision_date for refusal in refusals), (
+    assert all(r.decision_date > rows[-1].decision_date for r in undecidable), (
         "a row in the middle of the corpus was refused for an undecidable outcome, which means "
         "the trading day index has a hole in it rather than that the horizon ran out"
     )
+    assert all(r.decision_date < rows[0].decision_date for r in unpublished), (
+        "a row inside the recovered window was refused for want of a published figure, so the "
+        "archive has a gap in the middle rather than a start"
+    )
 
 
-def test_the_scoreable_and_labelled_counts_differ_by_exactly_the_refusals() -> None:
-    """The ratio the front page states, checked as arithmetic rather than quoted."""
+def test_the_scoreable_and_labelled_counts_differ_by_exactly_the_undecidable_rows() -> None:
+    """The ratio the front page states, checked as arithmetic rather than quoted.
+
+    SCOREABLE counts the rows a model could have RUN on: every feature was published in time.
+    LABELLED counts the rows it could have LEARNED from: the outcome had happened and been
+    published too. The gap between them is not a data quality problem to be fixed. It is the set
+    of days where a decision is possible and supervision is not, which is every day near the
+    present, and the rows refused for want of a published feature are in NEITHER count because a
+    model could not have run on them either.
+    """
     scoreable, labelled = frame.scoreable_and_labelled()
     rows, refusals = frame.build()
+    undecidable = [r for r in refusals if r.reason == frame.REASONS[0]]
     assert labelled == len(rows)
-    assert scoreable - labelled == len(refusals)
+    assert scoreable - labelled == len(undecidable)
     assert 0 < labelled < scoreable, (
         "every scoreable row is labelled, so there is no gap between what can be decided and "
         "what can be learned from, and the front page has nothing to show"
