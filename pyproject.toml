@@ -12,6 +12,11 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pytest>=8",
+    # HYPOTHESIS IS A TEST TOOL, NOT A MEASURING INSTRUMENT, and it sat in the wrong group for
+    # one commit. The verdict group is what the verdict is COMPUTED with, and a property search
+    # over the splitter's invariants computes no part of it: it is pytest with a better memory.
+    # The scaffold test that draws that line is what noticed.
+    "hypothesis>=6.140",
     "ruff>=0.6",
     "mypy>=1.11",
     "pyyaml>=6.0.3",
@@ -21,7 +26,6 @@ dev = [
 # committed CSV and JSON and needs none of it, which is the claim tests/test_scaffold.py holds.
 verdict = [
     "duckdb>=1.5",
-    "hypothesis>=6.140",
     "numpy>=2.1",
     "scikit-learn>=1.9",
 ]
@@ -44,6 +48,11 @@ target-version = "py311"
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
 [tool.pytest.ini_options]
+# `tests` ALONE, AND tests_verdict IS NOT LISTED ON PURPOSE. Running pytest with nothing but the
+# dev group installed has to work for somebody who has just cloned this, so the suite that needs
+# scikit-learn, DuckDB and numpy lives in its own directory and its own CI job. It is a
+# directory rather than a marker because a marker deselected by default is how a sibling ended
+# up with two named rigs that no test anywhere matched.
 testpaths = ["tests"]
 # No markers are declared here, and none will be before a test carries one. A sibling shipped
 # three marker names of which two matched no test at all, deselected by default so nothing
@@ -55,5 +64,5 @@ filterwarnings = ["error"]
 # A directory joins this list with its first Python file. Naming one mypy cannot find is an
 # error rather than a no-op, so the list cannot be written in advance, and tests/test_scaffold.py
 # fires on the commit that adds the first file to a directory that is missing from it.
-files = ["src", "tests"]
+files = ["src", "tests", "tests_verdict", "scripts"]
 strict = true

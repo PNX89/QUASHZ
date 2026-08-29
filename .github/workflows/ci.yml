@@ -35,3 +35,17 @@ jobs:
       # suite genuinely stays on the other side of that line.
       sync-args: "--dev --group verdict"
       run-mypy: true
+
+  # The suite that needs the measuring instruments. Its own job, because the offline suite above
+  # has to keep working for somebody who cloned this and installed the dev group alone, and that
+  # claim is worth nothing if the two are run by the same command.
+  verdict:
+    name: the splitter and the controls, against scikit-learn and DuckDB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+      - name: run the tests that need the instruments
+        run: uv run --group verdict pytest tests_verdict -q
