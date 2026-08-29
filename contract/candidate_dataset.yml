@@ -1,0 +1,33 @@
+dataset: candidate/candidate/main/candidate_frame
+description: >
+  What this pipeline requires of a candidate file before anything is trained on it. This file is
+  the artefact handed to the vendor: it is executed as SQL against the file where it sits, and a
+  failure is a readable diff rather than a support ticket.
+columns:
+  - name: decision_date
+    data_type: date
+    checks:
+      - missing:
+          threshold:
+            must_be: 0
+      - duplicate:
+          threshold:
+            must_be: 0
+  - name: level
+    data_type: double
+    checks:
+      - missing:
+          threshold:
+            must_be: 0
+  - name: slope
+    data_type: double
+    checks:
+      - missing:
+          threshold:
+            must_be: 0
+  - name: gdp_age_days
+    data_type: integer
+    checks:
+      - missing:
+          threshold:
+            must_be: 0

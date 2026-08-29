@@ -1,0 +1,21 @@
+{
+  "rows_in_the_admitted_frame": 2808,
+  "rows_after_a_vendor_mistake": 2809,
+  "checks_in_the_contract": 5,
+  "on_the_admitted_frame": {
+    "checks": 5,
+    "passed": 5,
+    "failed": 0,
+    "warned": 0,
+    "not_evaluated": 0
+  },
+  "on_the_broken_copy": {
+    "checks": 5,
+    "passed": 3,
+    "failed": 2,
+    "warned": 0,
+    "not_evaluated": 0
+  },
+  "exit_code_when_honest": 0,
+  "exit_code_when_broken": 1
+}
