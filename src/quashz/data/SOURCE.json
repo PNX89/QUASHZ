@@ -1,0 +1,60 @@
+{
+  "captured": "2026-08-29",
+  "licence": {
+    "Federal Reserve and BEA": "United States government work, reproduced freely",
+    "European Central Bank": "Reuse permitted without modification only, metadata included, so the file is committed exactly as served"
+  },
+  "excluded_by_licence": "The FRED-hosted S&P 500 and VIX series are excluded by name: they are redistributed on FRED under terms that do not permit republication, unlike the government series beside them.",
+  "series": [
+    {
+      "series": "DGS10",
+      "description": "10-year Treasury constant maturity, per cent, H.15",
+      "publisher": "Federal Reserve",
+      "via": "FRED graph CSV, keyless",
+      "rows": 16868,
+      "sha256": "3d8f76ffc003db070d0025d2f7ff2078865bbcc43cf4576009cedbcc7c110b4d"
+    },
+    {
+      "series": "DGS2",
+      "description": "2-year Treasury constant maturity, per cent, H.15",
+      "publisher": "Federal Reserve",
+      "via": "FRED graph CSV, keyless",
+      "rows": 13108,
+      "sha256": "2e35220bb8b674f7aadefd401e68d68b21d1bc48cdd867b89c130bfbe2436835"
+    },
+    {
+      "series": "T10Y2Y",
+      "description": "10-year minus 2-year, as the Federal Reserve publishes it, H.15",
+      "publisher": "Federal Reserve",
+      "via": "FRED graph CSV, keyless",
+      "rows": 13109,
+      "sha256": "80d1bf6a2fb6ed3ded02f597d53c094f2ab9df587e6d4c632bbdae5dd8ed546b"
+    },
+    {
+      "series": "DEXUSEU",
+      "description": "US dollars per euro, noon buying rate, H.10",
+      "publisher": "Federal Reserve",
+      "via": "FRED graph CSV, keyless",
+      "rows": 7210,
+      "sha256": "34c4d323b0885dc49d7aa79d1782a9b70fc75d0fd6755fd802a1732516d912d6"
+    },
+    {
+      "series": "GDPC1",
+      "description": "Real gross domestic product, billions of chained 2017 dollars, BEA",
+      "publisher": "Bureau of Economic Analysis",
+      "via": "FRED graph CSV, keyless",
+      "rows": 318,
+      "sha256": "519d65c05941022da119fdcbc95976d6865e94b9cc4a8248239e20d7b898e5fc"
+    },
+    {
+      "series": "EXR.D.USD.EUR.SP00.A",
+      "description": "ECB reference exchange rate, US dollar per euro, 2.15pm CET",
+      "publisher": "European Central Bank",
+      "via": "ECB Data Portal SDMX CSV, keyless",
+      "rows": 679,
+      "columns_kept": 32,
+      "sha256": "ff866890ddbf06e0ff34a053f9b4d4850d4c5a046aea517f74486b1f44cddd6d",
+      "modification": "None. The ECB permits reuse only without modification, including of the metadata, so all 32 columns are committed as served and every normalisation happens at read time."
+    }
+  ]
+}
