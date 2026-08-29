@@ -1,0 +1,59 @@
+[project]
+name = "quashz"
+version = "0.1.0"
+description = "An admission verdict for a vendor dataset, which refuses a row whose outcome was not decidable when the decision would have been made"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pyyaml>=6.0.3",
+    "types-pyyaml>=6.0.12.20260815",
+]
+# THE MEASURING INSTRUMENT, kept out of the default install on purpose. The offline suite reads
+# committed CSV and JSON and needs none of it, which is the claim tests/test_scaffold.py holds.
+verdict = [
+    "duckdb>=1.5",
+    "hypothesis>=6.140",
+    "numpy>=2.1",
+    "scikit-learn>=1.9",
+]
+# Soda is separate again from the verdict group, because it is the vendor-facing contract rather
+# than part of the decision, and because the 3.x line pins duckdb<1.1.0 and would drag the whole
+# repository backwards. See docs/adr/0002.
+contract = [
+    "soda-core>=4.22",
+    "soda-duckdb>=4.22",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quashz"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# No markers are declared here, and none will be before a test carries one. A sibling shipped
+# three marker names of which two matched no test at all, deselected by default so nothing
+# noticed, and the test policing them checked the names rather than their use.
+addopts = "-q"
+filterwarnings = ["error"]
+
+[tool.mypy]
+# A directory joins this list with its first Python file. Naming one mypy cannot find is an
+# error rather than a no-op, so the list cannot be written in advance, and tests/test_scaffold.py
+# fires on the commit that adds the first file to a directory that is missing from it.
+files = ["src", "tests"]
+strict = true

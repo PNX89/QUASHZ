@@ -1,0 +1,37 @@
+name: CI
+
+# Nothing here needs a credential and nothing here reaches a cloud account.
+#
+# The jobs arrive with the legs they check. This one runs the offline suite, which is what a
+# stranger gets by cloning the repository and installing the dev group alone. The verdict needs
+# scikit-learn, DuckDB and Hypothesis, and the vendor contract needs Soda, so those get their own
+# jobs as they arrive rather than being folded in here where the boundary would stop being
+# visible.
+#
+# NO `schedule:` ANYWHERE IN THIS REPOSITORY, and that is a rule rather than an omission. Every
+# required job runs from committed captures. Re-verifying against the live publishers is one
+# manually triggered workflow that is allowed to fail, because a red build caused by somebody
+# else's outage teaches people to ignore red builds.
+#
+# Third-party actions are pinned by commit from the first one, with the version in a comment.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: lint, types and the offline suite
+    uses: PNX89/.github/.github/workflows/checks.yml@v1
+    with:
+      python-versions: '["3.11", "3.12", "3.13"]'
+      # scikit-learn 1.9 requires Python 3.11 or newer, which is what fixes the floor of this
+      # matrix. It is synced here because mypy cannot check a file whose imports it cannot
+      # resolve, not because the offline suite needs it, and test_scaffold.py asserts that the
+      # suite genuinely stays on the other side of that line.
+      sync-args: "--dev --group verdict"
+      run-mypy: true
