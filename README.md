@@ -203,6 +203,8 @@ Part of the Q...Z toolset, all of it designing for the failure that does not ann
   re-running the same configuration does not buy another.
 - [QUEUEZ](https://github.com/PNX89/QUEUEZ), ordering a feed by its sequence, because on a real
   recorded session the clock goes backwards.
+- [QUANDARYZ](https://github.com/PNX89/QUANDARYZ), counting the distinct screens a component can
+  settle into when its responses arrive out of order.
 
 **On QUACKZ.** QUACKZ owns the block resampling machinery in this set, and the build plan for
 this repository said to import it. That turned out to be wrong for a reason worth stating: a
