@@ -1,0 +1,26 @@
+$ uv run --group verdict python scripts/measure_reconciliation.py
+
+US dollars per euro, 2024-01-02 to 2026-08-21, as published by the
+Federal Reserve and by the European Central Bank:
+
+  days both publish            651
+  days they agree exactly      10
+  median absolute difference   0.0015
+  standard deviation           0.00187
+  largest difference           0.0151
+  days only the ECB publishes  23
+  days only the Fed publishes  11
+
+Neither is wrong. They are fixed at different times of day, so a rule demanding
+equality rejects a good series and a rule with no tolerance accepts a stale one.
+
+The Federal Reserve also publishes the spread between its own ten year and two
+year yields. Over 12,557 days on which all three exist it equals the
+difference on 12,554 and disagrees on 3:
+
+  1990-11-21   8.27 - 7.55 = 0.72, published 0.74
+  1991-01-29   8.03 - 7.1 = 0.93, published 0.95
+  1995-11-29   5.85 - 5.42 = 0.43, published 0.42
+
+Those days are kept rather than filtered. A tolerance tuned until nothing fails
+has been tuned to the sample it was tested on.
