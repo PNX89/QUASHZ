@@ -199,6 +199,8 @@ Part of the Q...Z toolset, all of it designing for the failure that does not ann
   published, and failing the build when it quietly issues another.
 - QUASHZ, this one: refusing a row whose outcome had not been decided yet when the decision
   would have been made.
+- [QUALMZ](https://github.com/PNX89/QUALMZ), a fixed number of looks at the holdout, where
+  re-running the same configuration does not buy another.
 
 **On QUACKZ.** QUACKZ owns the block resampling machinery in this set, and the build plan for
 this repository said to import it. That turned out to be wrong for a reason worth stating: a
