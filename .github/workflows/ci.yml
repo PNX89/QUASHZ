@@ -96,3 +96,22 @@ jobs:
           git status --porcelain docs/evidence/contract
           git diff --exit-code -- docs/evidence/contract
           test -z "$(git status --porcelain docs/evidence/contract)"
+
+  # Two publishers of one quantity, reconciled. Needs nothing but the committed corpus and
+  # Python, but it is its own job so that a reader can see which measurement went red rather
+  # than being told that "the suite" failed.
+  reconciliation:
+    name: two publishers of one number, and what they disagree about
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+      - name: reconcile the two publishers and check the identity
+        run: uv run python scripts/measure_reconciliation.py
+      - name: fail if any measured outcome or transcript has changed
+        run: |
+          git status --porcelain docs/evidence/reconciliation
+          git diff --exit-code -- docs/evidence/reconciliation
+          test -z "$(git status --porcelain docs/evidence/reconciliation)"

@@ -1,0 +1,44 @@
+{
+  "fx": {
+    "window": [
+      "2024-01-02",
+      "2026-08-21"
+    ],
+    "days_both_publish": 651,
+    "agree_exactly": 10,
+    "median_absolute_difference": 0.0015,
+    "standard_deviation": 0.00187,
+    "largest_difference": 0.0151,
+    "days_only_the_ecb_publishes": 23,
+    "days_only_the_fed_publishes": 11
+  },
+  "identity": {
+    "days_all_three_exist": 12557,
+    "days_it_holds": 12554,
+    "days_it_fails": 3,
+    "the_failures": [
+      {
+        "date": "1990-11-21",
+        "ten_year": 8.27,
+        "two_year": 7.55,
+        "difference": 0.72,
+        "published": 0.74
+      },
+      {
+        "date": "1991-01-29",
+        "ten_year": 8.03,
+        "two_year": 7.1,
+        "difference": 0.93,
+        "published": 0.95
+      },
+      {
+        "date": "1995-11-29",
+        "ten_year": 5.85,
+        "two_year": 5.42,
+        "difference": 0.43,
+        "published": 0.42
+      }
+    ],
+    "places": 2
+  }
+}
