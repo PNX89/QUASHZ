@@ -79,7 +79,16 @@ def cross_validated_auc(name: str) -> Any:
             model.fit(features[fit], target[fit])
             probabilities = model.predict_proba(features[held])[:, 1]
             aucs.append(float(roc_auc_score(target[held], probabilities)))
-        return float(np.mean(aucs)) if aucs else 0.5
+        if not aucs:
+            # Every fold was the single-class case the loop above just skipped. Averaging zero
+            # folds and calling it a score is exactly what that skip exists to prevent, so this
+            # raises instead of quietly reporting the number the comment two lines up names as
+            # indistinguishable from a real result.
+            raise ValueError(
+                "every fold's fitting or scoring block was single class, so there is no fold "
+                "left to average an AUC over"
+            )
+        return float(np.mean(aucs))
 
     return score
 

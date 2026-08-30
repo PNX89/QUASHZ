@@ -53,10 +53,11 @@ jobs:
   # The verdict itself, re-issued rather than trusted. A committed measurement nobody regenerates
   # is a claim about a laptop, and this one carries a hash that a downstream repository checks.
   #
-  # ONE THREAD, and the harness sets it before scikit-learn is imported. Measured on this frame:
-  # 5.54 seconds per scoring with the default pool against 0.23 pinned to one thread, for an
-  # identical AUC to four decimal places. The problem is small enough that thread coordination
-  # costs more than the work.
+  # ONE THREAD, and the harness sets it before scikit-learn is imported. At this problem's size,
+  # coordinating a thread pool costs more than the fitting it coordinates, for an identical AUC
+  # to four decimal places pinned or not. No absolute time is stated here: it is machine
+  # dependent and this repository does not record it under docs/evidence the way it records
+  # every other measured number.
   verdict-issued:
     name: the verdict, issued again from the committed corpus
     runs-on: ubuntu-latest

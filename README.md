@@ -70,7 +70,7 @@ same quantity. The cases worth shipping are the ones where the two disagree and 
   days both publish            651
   days they agree exactly      10
   median absolute difference   0.0015
-  standard deviation           0.00187
+  standard deviation           0.00273
   largest difference           0.0151
   days only the ECB publishes  23
   days only the Fed publishes  11
@@ -83,8 +83,8 @@ an overlap.
 
 The same publisher's ten year yield, two year yield and the spread between them give a third
 check that needs no second source. Over 12,557 days it holds on **12,554** and fails on **3**,
-each off by two hundredths. Those three are committed rather than filtered, because a tolerance
-tuned until nothing fails has been tuned to the sample it was tested on.
+two of them by 0.02 and the third by 0.01. Those three are committed rather than filtered,
+because a tolerance tuned until nothing fails has been tuned to the sample it was tested on.
 
 ## The verdict, and what it is careful not to say
 

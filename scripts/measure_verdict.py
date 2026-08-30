@@ -9,11 +9,11 @@ WHAT IS MEASURED, in the order the verdict states it:
     3. the minimum detectable effect, from a swept positive control on the same yardstick
     4. a provenance hash over the admitted frame and the predicate that admitted it
 
-ONE THREAD, AND IT IS NOT A GUESS. Measured on this frame: the histogram gradient boosting leg
-takes 5.54 seconds per scoring with the default thread pool and 0.23 seconds pinned to one
-thread, for an identical AUC to four decimal places. The problem is small enough that thread
-coordination costs more than the work, so a two hundred permutation ensemble goes from a
-quarter of an hour to under a minute. Lowering the iteration count would also have been fast and
+ONE THREAD, AND IT IS NOT A GUESS. At this problem's size, scikit-learn's own thread pool costs
+more to coordinate than the fitting it coordinates, for an identical AUC to four decimal places
+pinned or not. Neither absolute time is reproducible enough to publish: it is machine dependent
+and this repository has nowhere to record it the way every other measured number here is
+recorded, under `docs/evidence/`. Lowering the iteration count would also have been fast and
 would have changed the answer, which is the difference between a cost saving and a thumb on the
 scale.
 """
