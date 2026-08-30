@@ -52,12 +52,22 @@ jobs:
           fi
           # The card shows the demo's captured output, so it has to contain it. A card built
           # from an older capture would publish numbers this repository no longer produces.
-          FIRST=$(head -1 docs/evidence/demo.txt)
-          grep -qF "$FIRST" site/index.html || {
-            echo "site/index.html does not contain the first line of docs/evidence/demo.txt"
-            echo "so the committed card was built from a different capture"
-            exit 1
-          }
+          #
+          # EVERY LINE, AND THIS CHECKED THE FIRST ONE. The first line of the capture is a count
+          # of recovered publication dates and it moves for almost nothing, so thirty-seven
+          # lines of measured figures went through this gate unread: a falsified "2661 of 2808
+          # decision dates" in the middle of the block passed here and passed the suite. The
+          # line for line comparison in ci.yml is the real check, because it can re-run the demo
+          # and this cannot; what this stops is a stale or hand-edited card reaching the web.
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            grep -qF -- "$line" site/index.html || {
+              echo "site/index.html does not contain this line of docs/evidence/demo.txt:"
+              echo "  $line"
+              echo "so the committed card was built from a different capture"
+              exit 1
+            }
+          done < docs/evidence/demo.txt
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site

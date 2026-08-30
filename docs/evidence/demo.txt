@@ -29,7 +29,10 @@ And what the frame does about it:
 
   The last row admitted is 2026-07-24, deciding on a yield published
   2026-07-23 and judged on an outcome dated 2026-08-20.
-  The quarterly figure it may read is already 388 days old.
+  The quarterly figure it may read is already 388 days old,
+  which is the reach of this bisection rather than the publisher's cadence: it
+  was run forward only to the quarter labelled 2025-07-01, and the corpus holds
+  3 later quarters whose publication dates were never recovered.
 
-  The first row refused after it is 2026-08-21, and the reason is not that a
+  The first row refused after it is 2026-07-27, and the reason is not that a
   column was null. It is that the answer had not happened yet.

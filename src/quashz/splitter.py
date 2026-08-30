@@ -9,9 +9,9 @@ THREE THINGS ARE DONE, AND THEY ARE NOT THE SAME THING.
 
     PURGE     drop every fitting index whose own outcome window overlaps a scoring index. This
               is about the TARGET's horizon and it is what most implementations stop at.
-    EMBARGO   drop a further band immediately after the scoring block, because a fitting row
-              just after it can carry information about the scoring rows through the features
-              rather than through the target. Applied on BOTH sides, which is where
+    EMBARGO   drop a further band BEYOND the purged window, because a fitting row just past
+              the horizon can still carry information about the scoring rows through the
+              features rather than through the target. Applied on BOTH sides, which is where
               implementations differ and where a property test earns its place.
     COUNT     report how many effectively independent observations are left, because two
               thousand rows at a twenty day horizon are not two thousand observations, and the
@@ -70,12 +70,20 @@ def purged_splits(n_obs: int, *, horizon: int, embargo: int, folds: int = 5) -> 
         forbidden: set[int] = set()
         for index in score:
             forbidden.update(range(index - horizon, index + horizon + 1))
-        # AND THE EMBARGO ON BOTH SIDES. After the block because a fitting row just past it is
-        # nearly the same day; before it for the same reason in the other direction. An embargo
-        # applied only after the block is the commonest form of this and it is asymmetric for no
-        # stated reason.
-        forbidden.update(range(start - horizon - embargo, start))
-        forbidden.update(range(stop, stop + horizon + embargo))
+        # AND THE EMBARGO ON BOTH SIDES, EACH BAND STARTING WHERE THE PURGE ENDS. After the
+        # block because a fitting row just past the horizon is nearly the same day; before it
+        # for the same reason in the other direction. An embargo applied only after the block is
+        # the commonest form of this and it is asymmetric for no stated reason.
+        #
+        # THE BOUNDS ARE WRITTEN AS THE PURGE PLUS A BAND rather than as a band reaching back to
+        # the block, and the two produce the same set. Writing them from the block made the loop
+        # above contribute nothing except the scoring indices themselves: on a contiguous block
+        # its union is the block widened by the horizon, and both tails of that already sat
+        # inside these bands. Deleting the horizon from the purge changed no output and failed
+        # no test, so the guarantee this splitter exists for was covered by the embargo and
+        # nothing was watching it.
+        forbidden.update(range(start - horizon - embargo, start - horizon))
+        forbidden.update(range(stop + horizon, stop + horizon + embargo))
 
         fit = tuple(index for index in range(n_obs) if index not in forbidden)
         splits.append(Split(fit=fit, score=tuple(score)))

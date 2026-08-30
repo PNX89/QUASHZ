@@ -14,6 +14,7 @@ what was measured.
 
 from __future__ import annotations
 
+import datetime
 import json
 import pathlib
 import re
@@ -21,6 +22,8 @@ from typing import Any
 
 import pytest
 import yaml
+
+from quashz import corpus, frame
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 README = (REPO / "README.md").read_text(encoding="utf-8")
@@ -43,25 +46,100 @@ def own_prose() -> str:
 
 
 def test_the_numbers_on_the_page_are_the_measured_ones() -> None:
-    """NUMBER, as a table of claim against source, so an unedited neighbour is visible."""
+    """NUMBER, as a table of claim against source, each figure anchored to its own sentence.
+
+    THE FIGURE IS CHECKED IN THE SENTENCE THAT CARRIES IT. This asked whether each value was a
+    substring of the page, and three of these claims are one or two characters long, so they
+    were satisfied by a digit somewhere in twelve kilobytes of prose whatever the page said.
+    Changing "5 checks pass" to "97 checks pass" and the identity's "fails on **3**" to "**7**"
+    left the whole suite green.
+
+    The overcorrection is worth naming too, because it is the same defect facing the other way:
+    an anchor demanding a whole sentence goes red the day the page is legitimately rewritten and
+    teaches the next person to loosen it. Each pattern here is the figure plus the few words
+    that make it mean something, and nothing more.
+    """
     verdict = evidence("verdict")
     reconciliation = evidence("reconciliation")
     contract = evidence("contract")
+    lags = sorted(
+        int(row["days_from_the_observation_label"])
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    )
+    ordinary = [lag for lag in lags if lag <= 130]
+    unusual = sorted(set(lags) - set(ordinary))
+    quarterly_probes = sum(
+        int(row["probes"]) for row in corpus.knowable_from() if row["series"] == "GDPC1"
+    )
+    daily_probes = sum(
+        int(row["probes"]) for row in corpus.knowable_from() if row["series"] != "GDPC1"
+    )
+    rows, _ = frame.build()
+    held = [label for label in corpus.fed("GDPC1") if label >= datetime.date(2015, 1, 1)]
+    newest = max(
+        datetime.date.fromisoformat(row["observation"])
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    )
+    leak = frame.quarterly_leak()
+    # The two figures with a decimal point in them are escaped, because an unescaped point
+    # matches any character and an anchor that accepts 94x8 is looser than it looks.
+    largest = re.escape(str(reconciliation["fx"]["largest_difference"]))
+    share = re.escape(f"{leak.share * 100:.1f}")
+
+    # THE PAGE IS FLATTENED FIRST, because a sentence on this page is wrapped at a hundred
+    # characters and an anchor that cannot cross a line break is an anchor that fails the day
+    # somebody rewraps a paragraph. The figures and the words either side of them survive
+    # rewrapping; the line breaks between them do not.
+    flattened = " ".join(README.split())
 
     claims = {
-        "rows admitted": f"{verdict['admitted']:,}",
-        "rows refused": f"{verdict['refused']:,}",
-        "effective observations": str(verdict["verdicts"][0]["effective_observations"]),
-        "ensemble": str(verdict["ensemble"]),
-        "days both publish the rate": str(reconciliation["fx"]["days_both_publish"]),
-        "days they agree exactly": str(reconciliation["fx"]["agree_exactly"]),
-        "largest fx difference": str(reconciliation["fx"]["largest_difference"]),
-        "days the identity holds": f"{reconciliation['identity']['days_it_holds']:,}",
-        "days it fails": str(reconciliation["identity"]["days_it_fails"]),
-        "checks in the contract": str(contract["checks_in_the_contract"]),
+        "rows admitted": rf"{verdict['admitted']:,} rows at a twenty day horizon",
+        "rows refused": rf"Of the {verdict['refused']:,} rows refused",
+        "effective observations": (
+            rf"are {verdict['verdicts'][0]['effective_observations']} effectively independent"
+        ),
+        "ensemble": rf"permuted {verdict['ensemble']} times",
+        "days both publish the rate": (
+            rf"days both publish\s+{reconciliation['fx']['days_both_publish']}\b"
+        ),
+        "days they agree exactly": (
+            rf"days they agree exactly\s+{reconciliation['fx']['agree_exactly']}\b"
+        ),
+        "largest fx difference": (rf"largest difference\s+{largest}\b"),
+        "days all three series exist": (
+            rf"Over {reconciliation['identity']['days_all_three_exist']:,} days"
+        ),
+        "days the identity holds": (
+            rf"it holds on \*\*{reconciliation['identity']['days_it_holds']:,}\*\*"
+        ),
+        "days it fails": rf"fails on \*\*{reconciliation['identity']['days_it_fails']}\*\*",
+        "checks in the contract": (
+            rf"{contract['checks_in_the_contract']} checks pass on the admitted frame"
+        ),
+        "probes spent bisecting": rf"{quarterly_probes + daily_probes} probes in all",
+        "probes spent on the quarters": rf"{quarterly_probes} across the {len(lags)} quarters",
+        "probes spent on the daily checks": rf"{daily_probes} on two spot checks",
+        "quarters in the ordinary band": rf"{len(ordinary)} of the {len(lags)} quarters",
+        "the ordinary band itself": rf"between {min(ordinary)} and {max(ordinary)} days",
+        "the two that took longer": rf"two took {unusual[0]} and {unusual[1]}",
+        "quarters the bisection reached": rf"reached {len(lags)} of the {len(held)} quarters",
+        "the last quarter it reached": rf"labelled {newest}",
+        "the age at the end of the frame": rf"climbs to {rows[-1].gdp_age_days} days",
+        "dates reading an unpublished figure": (
+            rf"on {leak.dates_reading_an_unpublished_figure:,} of the {leak.decision_dates:,} "
+            rf"decision dates, {share} per cent"
+        ),
+        "the worst it reads early by": rf"by up to {leak.worst_days_early} days",
     }
-    missing = {name: value for name, value in claims.items() if value not in README}
-    assert missing == {}, f"the README no longer states these measured figures: {missing}"
+    missing = {
+        name: pattern for name, pattern in claims.items() if not re.search(pattern, flattened)
+    }
+    assert missing == {}, (
+        f"the README no longer states these measured figures in the sentences that carry them: "
+        f"{missing}"
+    )
 
 
 def test_the_two_estimator_results_are_both_on_the_page() -> None:
