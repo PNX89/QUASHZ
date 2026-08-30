@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import tomllib
+from html import unescape
 from typing import Any
 
 import pytest
@@ -24,6 +25,17 @@ FACTS = REPO / "docs" / "evidence" / "facts.json"
 def facts() -> dict[str, Any]:
     loaded: dict[str, Any] = json.loads(FACTS.read_text(encoding="utf-8"))
     return loaded
+
+
+def card() -> str | None:
+    """The published card, or None until there is one. A card is written at publication."""
+    path = REPO / "site" / "index.html"
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def demo() -> str:
+    """The demo's captured stdout, which CI re-runs and diffs byte for byte."""
+    return (REPO / "docs" / "evidence" / "demo.txt").read_text(encoding="utf-8")
 
 
 def test_the_stated_test_total_counts_both_suites() -> None:
@@ -74,18 +86,126 @@ def test_the_capture_date_is_not_in_the_future() -> None:
 
 
 def test_a_published_card_shows_the_captured_demo_and_no_banned_dash() -> None:
-    """Only once one exists. A card is written at publication."""
-    card = REPO / "site" / "index.html"
-    if not card.exists():
+    """Only once one exists. A card is written at publication.
+
+    THE WHOLE BLOCK, AND THIS COMPARED THE FIRST LINE OF IT. The card's own note tells the
+    reader that a test fails when it stops matching a live run, and that was true of one line
+    out of thirty-eight. Falsifying "2661 of 2808 decision dates" in the middle of the block
+    left every test here green and the publish gate in pages.yml open, which checks the same
+    first line.
+    """
+    html = card()
+    if html is None:
         return
-    html = card.read_text(encoding="utf-8")
-    demo = (REPO / "docs" / "evidence" / "demo.txt").read_text(encoding="utf-8")
-    first = next(line for line in demo.splitlines() if line.strip())
-    assert first in html, "the card was not generated from the committed capture"
+    blocks = [unescape(found).strip() for found in re.findall(r"<pre[^>]*>(.*?)</pre>", html, re.S)]
+    assert demo().strip() in blocks, (
+        "no terminal block on the card is the committed capture, line for line. The card is "
+        "generated outside this repository from docs/evidence/demo.txt, so either it was built "
+        "from an older capture or a line of it has been edited by hand"
+    )
     # ESCAPES RATHER THAN THE CHARACTERS, and the first draft of this line used the characters
     # in the comment directly under a comment saying not to. The linter caught it.
     for dash in ("\u2014", "\u2013"):
         assert dash not in html, f"the published card contains {dash!r}"
+
+
+def test_the_facts_strip_on_the_card_is_the_captured_facts_file() -> None:
+    """The four figures at the top of the card, joined to the file they are generated from.
+
+    `facts.json` is checked against this repository by everything above, and the card is built
+    from `facts.json` somewhere else. Between those two there was nothing at all, so the strip
+    could say anything: a test total of 417 passed every test in this file and the publish gate
+    with it.
+    """
+    html = card()
+    if html is None:
+        return
+    strip = dict(re.findall(r"<dt>([^<]+)</dt><dd>([^<]+)</dd>", html))
+    assert strip, "the card has no facts strip, so the figures it leads with are unchecked"
+    stated = {
+        "Tests": str(facts()["tests"]),
+        "Python": str(facts()["python"]),
+        "Release": str(facts()["release"]),
+    }
+    wrong = {
+        label: (strip.get(label), value)
+        for label, value in stated.items()
+        if strip.get(label) != value
+    }
+    assert wrong == {}, (
+        f"the card and docs/evidence/facts.json disagree, as (card, capture): {wrong}. The card "
+        f"is generated from that file outside this repository, so re-run capture_evidence.py "
+        f"and regenerate the card"
+    )
+
+
+def test_the_claim_paragraph_states_the_lags_that_were_measured() -> None:
+    """The one part of the card that is prose rather than a captured transcript.
+
+    Every other figure on the page comes out of a file this repository regenerates. These four
+    were written by hand into the manifest the card is built from, so they were the only numbers
+    on it that nothing could contradict, and all four are about the measurement this repository
+    exists to make. Each is compared inside the phrase that carries it rather than searched for
+    on the page, because a page this long carries most small integers somewhere.
+    """
+    html = card()
+    if html is None:
+        return
+    from quashz import corpus, frame
+
+    lags = sorted(
+        int(row["days_from_the_observation_label"])
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    )
+    ordinary = [lag for lag in lags if lag <= 130]
+    unusual = sorted(set(lags) - set(ordinary))
+    leak = frame.quarterly_leak()
+
+    found = re.search(r'class="claim">(.*?)</p>', html, re.S)
+    assert found, "the card has no claim paragraph, so its headline argument is unchecked"
+    prose = " ".join(unescape(found.group(1)).split())
+    claims = {
+        "the ordinary band": rf"{len(ordinary)} of {len(lags)} quarters",
+        "the band itself": rf"between {min(ordinary)} and {max(ordinary)} days",
+        "the two that took longer": rf"two took {unusual[0]} and {unusual[1]}",
+        "the share that would read early": rf"on {leak.share * 100:.1f} per cent of decision",
+    }
+    missing = {name: pattern for name, pattern in claims.items() if not re.search(pattern, prose)}
+    assert missing == {}, (
+        f"the card's claim paragraph no longer states these as they were measured: {missing}. "
+        f"That paragraph is generated from the shared manifest rather than from anything here, "
+        f"so the figure is corrected there and the card regenerated"
+    )
+
+
+def test_the_readme_hero_image_shows_the_captured_demo() -> None:
+    """The first thing on the README, regenerated by nobody here and compared with nothing.
+
+    `docs/demo.svg` carries thirty lines of the same figures as the card, is referenced from one
+    line of one file, and had no test whatsoever: any line of it could have said anything. It
+    truncates the transcript by design, so what is asserted is that the lines it does show are
+    the transcript's own in order, and that the count in its closing line is what it leaves out.
+    """
+    svg = (REPO / "docs" / "demo.svg").read_text(encoding="utf-8")
+    nodes = [unescape(found) for found in re.findall(r"<text[^>]*>(.*?)</text>", svg, re.S)]
+    assert len(nodes) > 3, "the hero image carries almost no text, so this is checking nothing"
+    assert nodes[0].startswith("$ uv run python examples/what_was_knowable.py"), (
+        f"the hero image opens on {nodes[0]!r} rather than on the command it illustrates"
+    )
+    assert nodes[1] == "", "the blank line under the command is gone, so the offsets below moved"
+    shown, marker = nodes[2:-1], nodes[-1]
+    assert shown == demo().splitlines()[: len(shown)], (
+        "the lines in the hero image are not the committed capture's own, in order"
+    )
+    # COUNTED THE WAY THE IMAGE COUNTS, from `split` rather than `splitlines`, so the capture's
+    # trailing newline is one of them. That is one more than a reader would count, and it is the
+    # figure the image actually prints. What this asserts is that the figure tracks the capture,
+    # which is the half of it that goes stale.
+    hidden = len(demo().split("\n")) - len(shown)
+    assert marker == f"... {hidden} more lines, in full on the card", (
+        f"the hero image says {marker!r} and it leaves out {hidden} lines of the capture"
+    )
 
 
 def test_the_python_range_is_the_gating_matrix_and_orders_as_versions(

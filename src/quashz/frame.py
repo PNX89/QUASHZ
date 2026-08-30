@@ -18,6 +18,14 @@ MEASURED, NOT ASSUMED. The H.15 yields carry a release lag of one day: DGS10 for
 first served on 2024-01-03. Real GDP labelled 2024-01-01 was first served on 2024-04-25, 115
 days later. Both come from `knowable_from.csv`, which `scripts/capture_knowable.py` recovered by
 bisecting ALFRED vintages, and neither is written down anywhere in the data itself.
+
+ONE OF THE FOUR SERIES HAS NO MEASURED LAG, said here rather than left to be found. DGS10's was
+recovered and T10Y2Y borrows it, the two being H.15 dailies out of one release. DEXUSEU was
+never bisected at all, so `fx` below is read at the observation labelled the decision date
+itself, on a lag nothing here measured. SOURCE.json calls it a noon buying rate, and a noon rate
+is not knowable on the morning of the same day. Recovering it and applying it moves every
+measured number that reads this frame, so it is an open item held still by a test rather than a
+quiet one.
 """
 
 from __future__ import annotations
@@ -44,10 +52,13 @@ class Row:
     level: float
     slope: float
     fx: float
-    #: The most recent quarterly figure the publisher had SERVED by this morning, and how old
-    #: the period it describes already was. The age is a feature in its own right: a model given
-    #: a number without being told how stale it is cannot tell a fresh release from a figure
-    #: five months old, and on this series the difference is a quarter of a year.
+    #: The most recent quarterly figure the publisher had SERVED by this morning, among the
+    #: quarters the archive was bisected for, and how old the period it describes already was.
+    #: The age is a feature in its own right: a model given a number without being told how
+    #: stale it is cannot tell a fresh release from a figure five months old, and on this series
+    #: the difference is a quarter of a year. Past the last recovered quarter the same figure is
+    #: served to every later decision date and the age climbs, so at the very end of the corpus
+    #: it measures the reach of the bisection as well as the publisher's lag.
     gdp: float
     gdp_age_days: int
     outcome_date: datetime.date | None
@@ -142,6 +153,12 @@ def build(horizon: int = HORIZON) -> tuple[list[Row], list[Refusal]]:
                 )
             )
             continue
+        # THE TOP END OF THE RECOVERY IS NOT THE TOP END OF THE CORPUS. The refusal above covers
+        # the start, where nothing had been recovered yet and there is no honest answer. There is
+        # no matching refusal here, so past the last recovered quarter this keeps serving that
+        # one. The corpus holds values for later quarters whose publication dates were never
+        # bisected; which ones is pinned by a test and stated in the README, rather than being
+        # absorbed into a feature nobody can see it in.
         newest = max(served)
 
         index = position[latest]
@@ -176,6 +193,8 @@ def build(horizon: int = HORIZON) -> tuple[list[Row], list[Refusal]]:
                 latest_yield_date=latest,
                 level=yields[latest],
                 slope=slopes[latest],
+                # THE UNMEASURED CLOCK. The module docstring says which series it is and why
+                # it is still read at its own label date.
                 fx=rates[decision_date],
                 gdp=quarterly[newest],
                 gdp_age_days=(decision_date - newest).days,

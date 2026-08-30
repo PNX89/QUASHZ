@@ -49,6 +49,36 @@ def test_no_fitting_index_lies_within_the_horizon_of_a_scoring_index(
                 )
 
 
+@pytest.mark.parametrize(
+    ("n_obs", "horizon", "folds"),
+    [(100, 7, 4), (60, 0, 3), (37, 12, 5), (400, 60, 2), (9, 3, 3)],
+)
+def test_the_purge_alone_clears_the_window_around_every_scoring_block(
+    n_obs: int, horizon: int, folds: int
+) -> None:
+    """THE PURGE ON ITS OWN, with the embargo set to nothing so nothing else can be doing it.
+
+    This is the direct test the purge did not have. The property test below asserts a band is
+    clear, and the band it asserts was cleared twice over: the embargo bounds used to be written
+    from the scoring block rather than from the end of the purged window, so they covered the
+    horizon themselves. Deleting the horizon from the purge loop entirely changed no output and
+    left both suites green, which is a guarantee nobody was watching.
+
+    With `embargo=0` the two bands are empty ranges, so the fitting set below is the purge and
+    nothing else, and it is asserted exactly rather than as a containment: a purge that is too
+    wide throws away fitting rows for no reason, and that is worth a red build too.
+    """
+    for split in purged_splits(n_obs, horizon=horizon, embargo=0, folds=folds):
+        start, stop = split.score[0], split.score[-1] + 1
+        expected = tuple(
+            index for index in range(n_obs) if not start - horizon <= index < stop + horizon
+        )
+        assert split.fit == expected, (
+            f"with no embargo the fitting set for [{start}, {stop}) at a horizon of {horizon} "
+            f"should be everything outside [{start - horizon}, {stop + horizon})"
+        )
+
+
 @given(panels())
 def test_the_embargo_is_applied_on_both_sides_of_every_boundary(
     panel: tuple[int, int, int, int],

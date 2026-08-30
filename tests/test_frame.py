@@ -10,8 +10,13 @@ from __future__ import annotations
 
 import csv
 import datetime
+import pathlib
 
 from quashz import corpus, frame
+
+#: The demo's captured stdout. CI re-runs the demo and fails if a byte of this moved, so a claim
+#: asserted against this file is a claim asserted against what the demo prints.
+DEMO = pathlib.Path(__file__).resolve().parents[1] / "docs" / "evidence" / "demo.txt"
 
 
 def test_the_release_lag_in_the_code_is_the_one_the_archive_measured() -> None:
@@ -234,3 +239,131 @@ def test_every_recovered_bracket_crossed_a_real_publication() -> None:
         )
         assert len(row["rows_digest_when_present"]) == 64, "that is not a SHA-256"
         assert row["last_probe_without_it"] < row["knowable_from"]
+
+
+def test_the_exchange_rate_is_the_one_feature_read_at_its_own_label_date() -> None:
+    """THE THIRD CLOCK, WHICH NOTHING READ. Asserted because it is a departure, not a detail.
+
+    The yields are read at the lag the archive measured for DGS10. The exchange rate is not: no
+    DEXUSEU observation was ever bisected, so `fx` is taken from the observation labelled the
+    decision date itself, on a lag nothing here measured. SOURCE.json calls it a noon buying
+    rate, and a noon rate is not knowable on the morning of the same day.
+
+    The test above checks `latest_yield_date` and nothing else, so pointing `fx` at TOMORROW's
+    rate, which is an unambiguous look-ahead, left both suites green. This pins the clock the
+    frame actually uses, in both directions: recovering DEXUSEU's publication dates and applying
+    them is what closes it, and that moves every measured number reading this frame, so it fails
+    here first rather than arriving inside a regenerated verdict.
+    """
+    rows, _ = frame.build()
+    rates = corpus.fed("DEXUSEU")
+    measured = {row["series"] for row in corpus.knowable_from()}
+    assert "DEXUSEU" not in measured, (
+        "DEXUSEU now has a recovered publication date, so the frame can read the rate the "
+        "publisher had SERVED rather than the one labelled the decision date. Apply it in "
+        "build() and replace this test rather than relaxing it"
+    )
+    offenders = [row for row in rows if row.fx != rates[row.decision_date]]
+    assert offenders == [], (
+        f"{len(offenders)} rows read an exchange rate that is not the one labelled their own "
+        f"decision date, the first on {offenders[0].decision_date}. That is a change to the "
+        f"third clock, and every measured number that reads this frame moves with it"
+    )
+
+
+def test_the_quarters_the_bisection_never_reached_are_named_rather_than_missing() -> None:
+    """The recovery stops short of the corpus, and this is where that is written down.
+
+    `knowable_from.csv` carries a publication date for every quarter the archive was bisected
+    for, and the corpus carries VALUES for three quarters past the last of them. Nothing joined
+    the two coverages, so the gap was invisible: `build()` serves the last recovered figure to
+    every later decision date and `gdp_age_days` climbs to nearly twice any age the archive
+    measured, which is a fact about this capture rather than about the publisher.
+
+    PINNED BY NAME AND BY SIZE. A test asserting merely that some quarters are missing would
+    pass with a fourth one gone; a test asserting a count would pass with a different three.
+    Closing the gap is a `capture_knowable.py` run, which rewrites the corpus and every measured
+    number that depends on it, so it is a deliberate act rather than a tidy-up and this goes red
+    until somebody does it or edits this list on purpose.
+    """
+    recovered = {
+        datetime.date.fromisoformat(row["observation"])
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    }
+    held = [label for label in corpus.fed("GDPC1") if label >= datetime.date(2015, 1, 1)]
+    uncovered = sorted(label.isoformat() for label in held if label not in recovered)
+    assert uncovered == ["2025-10-01", "2026-01-01", "2026-04-01"], (
+        f"the quarters this corpus holds a value for and the bisection never reached are now "
+        f"{uncovered}. Re-run scripts/capture_knowable.py and regenerate every measurement that "
+        f"reads the frame, or change this list on purpose"
+    )
+    assert max(recovered) < min(datetime.date.fromisoformat(label) for label in uncovered), (
+        "an unrecovered quarter sits inside the recovered range, so this is a hole in the middle "
+        "of the archive rather than a capture that stopped early"
+    )
+
+
+def test_the_demo_closes_on_the_first_refusal_after_the_last_admitted_row() -> None:
+    """The sentence says FIRST and the arithmetic behind it took a maximum.
+
+    A maximum over the whole ledger returns the last refused date in the corpus, which is a
+    month past the boundary this exhibit is about. Nothing joined that line to anything, so a
+    figure computed as the wrong quantity was published in the transcript, on the card and in
+    the README's hero image, with every drift guard in the repository faithfully protecting it.
+
+    Asserted against the sentence that carries it rather than against the file, because a
+    thirty-five line transcript contains most of these dates somewhere.
+    """
+    rows, refusals = frame.build()
+    last = rows[-1].decision_date
+    following = sorted(r.decision_date for r in refusals if r.decision_date > last)
+    assert following, "nothing is refused after the last admitted row, so the exhibit has no end"
+    sentence = next(
+        line
+        for line in DEMO.read_text(encoding="utf-8").splitlines()
+        if "The first row refused after it is" in line
+    )
+    assert following[0].isoformat() in sentence, (
+        f"the demo closes on {sentence.strip()!r}, and the first row refused after {last} is "
+        f"{following[0]}"
+    )
+    considered = sorted({r.decision_date for r in rows} | {r.decision_date for r in refusals})
+    assert considered[considered.index(last) + 1] == following[0], (
+        "the date the demo closes on is not the next decision date after the last admitted one, "
+        "so the sentence is not describing the boundary it claims to describe"
+    )
+
+
+def test_the_demo_states_the_reach_of_the_bisection_beside_the_age_it_prints() -> None:
+    """The age this exhibit closes on is bounded by the capture, not by the publisher.
+
+    `gdp_age_days` is a model feature, and the transcript prints its largest value eleven lines
+    under a line saying the ordinary publication lag is about four months. The number is
+    correct; what makes it honest is the sentence around it, so the sentence is what is checked.
+    """
+    demo = DEMO.read_text(encoding="utf-8").splitlines()
+    rows, _ = frame.build()
+    newest = max(
+        datetime.date.fromisoformat(row["observation"])
+        for row in corpus.knowable_from()
+        if row["series"] == "GDPC1"
+    )
+    unrecovered = sorted(label for label in corpus.fed("GDPC1") if label > newest)
+    assert unrecovered, (
+        "the corpus holds no quarter past the last recovered one, so this caveat describes "
+        "nothing and should be deleted along with the lines it explains"
+    )
+    age = next(line for line in demo if "days old" in line)
+    assert f"{rows[-1].gdp_age_days} days old" in age, (
+        f"the demo prints {age.strip()!r} and the last admitted row's figure is "
+        f"{rows[-1].gdp_age_days} days old"
+    )
+    reach = next(line for line in demo if "run forward only to" in line)
+    assert newest.isoformat() in reach, (
+        f"the demo says {reach.strip()!r} and the bisection was run forward to {newest}"
+    )
+    tail = next(line for line in demo if "later quarters" in line)
+    assert tail.strip().startswith(f"{len(unrecovered)} later quarters"), (
+        f"the demo says {tail.strip()!r} and {len(unrecovered)} quarters were never recovered"
+    )

@@ -34,13 +34,20 @@ measured the dates behind it.
 A figure dated the first of the quarter was not knowable on the first of the quarter. Real GDP
 labelled 2024-01-01 was first served on 2024-04-25, 115 days later, and nothing in the data says
 so. `scripts/capture_knowable.py` recovers it by bisecting the archive's vintage dates: 478
-probes across 43 quarters, plus two daily checks that measure the yields' own release lag rather
-than assuming it is zero.
+probes in all, 462 across the 43 quarters and 16 on two spot checks of one daily series, which
+measure the yields' own release lag rather than assuming it is zero.
 
 **The lag is not a constant, which is the whole reason this cannot be a table.** 41 of the 43
 quarters were first served between 115 and 121 days after the day they are labelled. The other
 two took 150 and 175. This repository records when, not why: the archive answers the first
 question and not the second.
+
+**The bisection reached 43 of the 46 quarters this corpus holds a figure for, and no further.**
+It was run forward only as far as the quarter labelled 2025-07-01, so past that date the frame
+keeps serving that same figure and `gdp_age_days` climbs to 388 days. That number is the reach
+of this capture rather than the publisher's cadence, which is why it is stated here as well as
+printed by the demo. Closing it means re-running the capture, and that moves every measured
+number this page carries.
 
 What that costs a pipeline that reads a figure at its label date instead: **on 2,661 of the
 2,808 decision dates, 94.8 per cent, it reads a number the publisher had not published yet**, by
@@ -167,10 +174,17 @@ It does not model a market and nothing here was traded on. The target is a direc
 twenty day horizon, chosen because it is a target whose outcome is not always decidable, which
 is the property the refusal needs.
 
-It recovers publication dates for one quarterly series and two daily ones, back to 2015. Of the
+It recovers publication dates for one quarterly series and one daily one, back to 2015. Of the
 4,123 rows refused in total, 4,103 are refused for exactly that reason: they fall before the
 first recovered publication date, and inventing an earlier one is precisely the mistake this
 exists to catch.
+
+**The exchange rate is the one feature read at its own label date.** DEXUSEU was never bisected,
+so `fx` is taken from the observation labelled the decision date itself while the two yields
+beside it are read a day earlier, and the publisher calls it a noon buying rate. That is a
+departure from the rule the rest of the frame keeps. It is named in `src/quashz/frame.py` and
+held still by a test, so recovering that lag and applying it has to be a decision rather than a
+drift.
 
 <!-- toolset:start -->
 
