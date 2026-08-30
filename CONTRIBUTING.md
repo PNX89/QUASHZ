@@ -7,7 +7,7 @@ be useful is usually to disagree with something it claims.
 
 ```bash
 git clone https://github.com/PNX89/QUASHZ.git && cd QUASHZ
-uv sync --all-extras --dev
+uv sync --dev --group verdict
 uv run python examples/what_was_knowable.py
 ```
 
@@ -34,7 +34,7 @@ uv run --group verdict python scripts/capture_evidence.py
 ```
 
 Run every one of them. Running only the test suite is the most common way to be surprised by a
-red badge: formatting and typing are gates here, not suggestions.
+red badge: formatting, linting and typing are gates here, not suggestions.
 
 ## And the jobs that gate the pull request
 
