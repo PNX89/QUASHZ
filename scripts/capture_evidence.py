@@ -109,6 +109,21 @@ def release() -> str:
     return tags[0]
 
 
+def captured_date(*, now: datetime.datetime | None = None) -> str:
+    """UTC, not the capturing machine's local date.
+
+    CI runs on a runner whose clock is UTC, and test_the_capture_date_is_not_in_the_future
+    compares this field against whatever "today" is on the machine running the suite. A capture
+    taken after local midnight but before UTC midnight would otherwise write a date the CI
+    runner has not reached yet, and fail a check that has nothing to do with what was captured.
+
+    `now` is accepted rather than always read from the clock so the UTC conversion itself can be
+    tested against a fixed instant instead of racing the real one.
+    """
+    moment = now if now is not None else datetime.datetime.now(datetime.UTC)
+    return moment.astimezone(datetime.UTC).date().isoformat()
+
+
 def main() -> int:
     result = subprocess.run(
         [sys.executable, str(DEMO)], capture_output=True, text=True, cwd=ROOT, check=False
@@ -129,7 +144,7 @@ def main() -> int:
         "tests": test_total(),
         "python": python_range(),
         "release": release(),
-        "captured": datetime.date.today().isoformat(),
+        "captured": captured_date(),
         "runUrl": f"https://github.com/{slug}/actions/runs/{run_id}" if run_id else None,
     }
     (EVIDENCE / "facts.json").write_text(json.dumps(facts, indent=2) + "\n", encoding="utf-8")
