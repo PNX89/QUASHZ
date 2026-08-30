@@ -34,6 +34,7 @@ import csv
 import datetime
 import hashlib
 import pathlib
+import re
 import sys
 import time
 import urllib.error
@@ -64,20 +65,37 @@ WRONG_HOST = (
 #: DGS10 is the control. A daily series is supposed to be available almost at once, and this
 #: measures whether it is rather than assuming a zero lag, which would be the same mistake in
 #: the other direction.
-def wanted() -> list[tuple[str, str, str, str]]:
-    """Every quarter from 2015 to the last one the corpus holds, plus two daily spot checks."""
+def wanted(today: datetime.date | None = None) -> list[tuple[str, str, str, str]]:
+    """Every quarter from 2015 to the last one the corpus holds, plus two daily spot checks.
+
+    THE SEARCH WINDOW ENDS TODAY AND THE CLOCK IS AN ARGUMENT SO THIS CAN BE CHECKED. It used
+    to end at the label plus 400 days for every quarter, whether or not that day had happened.
+    For any quarter labelled inside the last 400 days that is a vintage the archive cannot have,
+    the first probe of the bisection asks for it, the archive clamps the request to its latest
+    real vintage and reports THAT date in the header, and the guard below correctly refuses a
+    reply about a day nobody asked about. Three quarters the corpus already holds values for
+    were dropped that way, and the committed file records none of it.
+    """
     import csv as _csv
 
+    today = today or datetime.date.today()
     quarters: list[tuple[str, str, str, str]] = []
     with (DATA / "GDPC1.csv").open(encoding="utf-8", newline="") as handle:
-        labels = [row["observation_date"] for row in _csv.DictReader(handle)]
-    for label in labels:
+        rows = [(row["observation_date"], row["GDPC1"]) for row in _csv.DictReader(handle)]
+    for label, value in rows:
         if label < "2015-01-01":
             continue
         start = datetime.date.fromisoformat(label)
-        # A year of search space after the quarter starts. Every measured lag so far is under
-        # 130 days, and a bracket that is too wide costs one extra probe rather than an answer.
-        until = (start + datetime.timedelta(days=400)).isoformat()
+        # A quarter that has not begun, and one the publisher has written a full stop against,
+        # were both never served, so there is no publication date to look for. Skipped here,
+        # where it is one line of arithmetic, rather than by a refusal fifty probes later that
+        # now stops the whole run.
+        if start >= today or value.strip() in ("", "."):
+            continue
+        # A year of search space after the quarter starts, and never past the day this is run.
+        # Every measured lag so far is under 130 days, so a bracket that is too wide costs one
+        # extra probe rather than an answer, and one that ends in the future costs the quarter.
+        until = min(start + datetime.timedelta(days=400), today).isoformat()
         quarters.append(("GDPC1", label, label, until))
     return [
         *quarters,
@@ -112,6 +130,12 @@ def present(rows: str, observation: str) -> bool:
     return any(line.startswith(f"{observation},") for line in rows.splitlines())
 
 
+#: What a reply from the archive looks like when it is answering about a real vintage: the
+#: series id carrying that vintage's own date. Whether it is the date that was ASKED for is a
+#: separate question, and the two answers have different causes.
+ARCHIVE_HEADER = re.compile(r"^observation_date,(?P<series>[A-Za-z0-9]+)_(?P<vintage>\d{8})$")
+
+
 def refuse_a_reply_that_is_not_from_the_archive(
     header: str, series: str, probe_date: datetime.date
 ) -> None:
@@ -134,13 +158,29 @@ def refuse_a_reply_that_is_not_from_the_archive(
     vintage also answers 200, serving the nearest preceding real vintage under a header that
     ECHOES the date asked for. This check passes on that reply, which is why the column is named
     `probe_date` and why a bracket is accepted only when two probes return different content.
+
+    TWO REFUSALS, BECAUSE THERE ARE TWO CAUSES AND THEY ARE FIXED DIFFERENTLY. A probe past the
+    last vintage the archive holds is clamped to the latest, and there the header reports the
+    real date instead of echoing the request. That reply is well formed and from the right host:
+    the request was simply for a day the archive cannot answer about, and the caller's search
+    window is what has to change. Blaming the wrong host for it sent the reader looking at a URL
+    that was correct, which is how three quarters stayed missing.
     """
-    if header != f"observation_date,{series}_{probe_date:%Y%m%d}":
+    if header == f"observation_date,{series}_{probe_date:%Y%m%d}":
+        return
+    served = ARCHIVE_HEADER.match(header)
+    if served is not None and served["series"] == series:
         raise SystemExit(
-            f"the archive returned the header {header!r} for a {probe_date} probe. A bare series "
-            f"id means the request reached the host that ignores the vintage and answers with "
-            f"today's data, and every result from here would be a fiction with a 200 beside it"
+            f"the archive answered a {probe_date} probe with its {served['vintage']} vintage. A "
+            f"date after the last vintage it holds is clamped to the latest one, and there the "
+            f"header reports the real date rather than echoing the request, so this probe is "
+            f"off the end of the archive rather than at the host that ignores the vintage"
         )
+    raise SystemExit(
+        f"the archive returned the header {header!r} for a {probe_date} probe. A bare series "
+        f"id means the request reached the host that ignores the vintage and answers with "
+        f"today's data, and every result from here would be a fiction with a 200 beside it"
+    )
 
 
 def recover(series: str, observation: str, first: str, last: str) -> dict[str, object]:
@@ -203,11 +243,26 @@ def main() -> int:
     targets = wanted()
     print(f"recovering {len(targets)} observations")
     recovered = []
+    skipped: list[str] = []
     for target in targets:
         try:
             recovered.append(recover(*target))
         except SystemExit as exc:
+            skipped.append(f"{target[0]} {target[1]}")
             print(f"  {target[0]} {target[1]}: SKIPPED, {exc}")
+
+    # A PARTIAL RECOVERY IS NEVER WRITTEN OVER A COMPLETE ONE, and the shell is told. Every skip
+    # went to a stdout nobody keeps, the survivors were written out, and the exit code was zero,
+    # so three quarters the corpus holds values for left the committed file with nothing
+    # anywhere recording that they had ever been asked for.
+    if skipped:
+        print(
+            f"{len(skipped)} of {len(targets)} targets were skipped, so this recovery is "
+            f"partial and nothing was written: {', '.join(skipped)}",
+            file=sys.stderr,
+        )
+        return 1
+
     for entry in recovered:
         print(
             f"  {entry['series']} {entry['observation']}: knowable from "

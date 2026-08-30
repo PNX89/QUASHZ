@@ -78,10 +78,29 @@ def main() -> None:
     example = rows[-1]
     print(f"  The last row admitted is {example.decision_date}, deciding on a yield published")
     print(f"  {example.latest_yield_date} and judged on an outcome dated {example.outcome_date}.")
-    print(f"  The quarterly figure it may read is already {example.gdp_age_days} days old.")
+
+    # THE AGE IS BOUNDED BY THIS CAPTURE RATHER THAN BY THE PUBLISHER. Printed bare, it read as
+    # a fact about the statistical office, on a page that opens by saying the ordinary lag is
+    # about four months. It is not: the bisection stops at the last quarter it recovered, and
+    # every decision date after that keeps reading the same figure while the age climbs.
+    newest = max(datetime.date.fromisoformat(row["observation"]) for row in recovered)
+    unrecovered = sorted(label for label in corpus.fed("GDPC1") if label > newest)
+    print(f"  The quarterly figure it may read is already {example.gdp_age_days} days old,")
+    print("  which is the reach of this bisection rather than the publisher's cadence: it")
+    print(f"  was run forward only to the quarter labelled {newest}, and the corpus holds")
+    print(f"  {len(unrecovered)} later quarters whose publication dates were never recovered.")
     print()
-    latest = max(refusal.decision_date for refusal in refusals)
-    print(f"  The first row refused after it is {latest}, and the reason is not that a")
+
+    # THE FIRST REFUSAL AFTER THE LAST ADMISSION, which is what the sentence says. This was
+    # `max` over the whole ledger, so it printed the LAST refused date in the corpus, a month
+    # past the boundary rather than the day after it. The exhibit closes on the moment
+    # supervision runs out, and a date a month further on shows nothing of the sort.
+    following = min(
+        refusal.decision_date
+        for refusal in refusals
+        if refusal.decision_date > example.decision_date
+    )
+    print(f"  The first row refused after it is {following}, and the reason is not that a")
     print("  column was null. It is that the answer had not happened yet.")
 
 
