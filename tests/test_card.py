@@ -85,6 +85,27 @@ def test_the_capture_date_is_not_in_the_future() -> None:
     assert datetime.date.fromisoformat(facts()["captured"]) <= datetime.date.today()
 
 
+def test_the_captured_date_converts_to_utc_before_taking_the_calendar_date() -> None:
+    """CI runs on a UTC runner. A capture taken between local midnight and UTC midnight, on a
+    machine east of Greenwich, wrote a date the runner had not reached yet, which failed
+    test_the_capture_date_is_not_in_the_future for a reason that had nothing to do with what was
+    captured. Reproduced with a fixed instant that already reads as New Year's Day in a timezone
+    two hours ahead of UTC while UTC itself is still on New Year's Eve.
+    """
+    import datetime
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    import capture_evidence
+
+    ahead_of_utc = datetime.timezone(datetime.timedelta(hours=2))
+    moment = datetime.datetime(2030, 1, 1, 0, 30, tzinfo=ahead_of_utc)
+    assert capture_evidence.captured_date(now=moment) == "2029-12-31", (
+        "the captured date used the instant's own local calendar date instead of converting to "
+        "UTC first"
+    )
+
+
 def test_a_published_card_shows_the_captured_demo_and_no_banned_dash() -> None:
     """Only once one exists. A card is written at publication.
 
