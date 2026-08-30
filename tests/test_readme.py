@@ -87,6 +87,17 @@ def test_the_numbers_on_the_page_are_the_measured_ones() -> None:
     # matches any character and an anchor that accepts 94x8 is looser than it looks.
     largest = re.escape(str(reconciliation["fx"]["largest_difference"]))
     share = re.escape(f"{leak.share * 100:.1f}")
+    # HOW FAR EACH OF THE THREE IDENTITY FAILURES MISSES BY, not just how many there are. A page
+    # that says "each off by two hundredths" when one of the three misses by one hundredth is
+    # wrong about the exhibit's own load-bearing number, and the count check above does not
+    # catch it because it never looks at the magnitudes.
+    places = reconciliation["identity"]["places"]
+    failure_sizes = sorted(
+        round(abs(entry["published"] - entry["difference"]), places)
+        for entry in reconciliation["identity"]["the_failures"]
+    )
+    single = re.escape(str(failure_sizes[0]))
+    paired = re.escape(str(failure_sizes[-1]))
 
     # THE PAGE IS FLATTENED FIRST, because a sentence on this page is wrapped at a hundred
     # characters and an anchor that cannot cross a line break is an anchor that fails the day
@@ -115,6 +126,9 @@ def test_the_numbers_on_the_page_are_the_measured_ones() -> None:
             rf"it holds on \*\*{reconciliation['identity']['days_it_holds']:,}\*\*"
         ),
         "days it fails": rf"fails on \*\*{reconciliation['identity']['days_it_fails']}\*\*",
+        "the size of the three identity failures": (
+            rf"two of them by {paired} and the third by {single}"
+        ),
         "checks in the contract": (
             rf"{contract['checks_in_the_contract']} checks pass on the admitted frame"
         ),

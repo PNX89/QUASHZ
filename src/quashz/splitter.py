@@ -60,8 +60,13 @@ def purged_splits(n_obs: int, *, horizon: int, embargo: int, folds: int = 5) -> 
     splits: list[Split] = []
     for fold in range(folds):
         start, stop = edges[fold], edges[fold + 1]
-        if start == stop:
-            continue
+        # UNREACHABLE GIVEN THE GUARD ABOVE, AND ASSERTED RATHER THAN SWALLOWED. `n_obs >=
+        # folds` keeps every unrounded step at least 1, and a brute force search over folds 2
+        # to 29 and n_obs up to 20,000 never rounded two consecutive edges to the same index. A
+        # `continue` here would silently drop a fold and break the tiling property the property
+        # test asserts; an assertion fails loudly the day a change to the edge formula makes it
+        # reachable instead of hiding a fold that went missing.
+        assert start != stop, f"fold {fold} of {folds} produced an empty scoring block"
         score = range(start, stop)
 
         # THE PURGE IS THE UNION OF EVERY SCORING ROW'S OWN WINDOW, not a band at the edges. A

@@ -6,7 +6,7 @@ Federal Reserve and by the European Central Bank:
   days both publish            651
   days they agree exactly      10
   median absolute difference   0.0015
-  standard deviation           0.00187
+  standard deviation           0.00273
   largest difference           0.0151
   days only the ECB publishes  23
   days only the Fed publishes  11

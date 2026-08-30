@@ -64,16 +64,6 @@ class Row:
     outcome_date: datetime.date | None
     outcome: int | None
 
-    @property
-    def scoreable(self) -> bool:
-        """Every feature was knowable at the decision date, so a model could have run."""
-        return True
-
-    @property
-    def labelled(self) -> bool:
-        """The outcome had happened AND been published, so the row can be learned from."""
-        return self.outcome is not None
-
 
 @dataclass(frozen=True)
 class Refusal:

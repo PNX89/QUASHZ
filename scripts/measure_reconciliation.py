@@ -62,7 +62,13 @@ def main() -> int:
     if not shared:
         print("the two publishers share no days at all", file=sys.stderr)
         return 1
-    differences = [abs(fed_rate[day] - ecb_rate[day]) for day in shared]
+    # SIGNED, because the dispersion a reader sizes a symmetric tolerance from is the spread of
+    # the disagreement, not of its magnitude. `differences` below stays absolute for the median,
+    # the exact-match count and the largest gap, all three of which are honestly about size
+    # rather than direction, but folding the sign into a standard deviation understates it: on
+    # this corpus the folded figure is a third smaller than the signed one.
+    signed_differences = [fed_rate[day] - ecb_rate[day] for day in shared]
+    differences = [abs(value) for value in signed_differences]
     exact = sum(1 for value in differences if value == 0)
 
     yields10 = corpus.fed("DGS10")
@@ -88,7 +94,7 @@ def main() -> int:
             "days_both_publish": len(shared),
             "agree_exactly": exact,
             "median_absolute_difference": round(statistics.median(differences), 5),
-            "standard_deviation": round(statistics.pstdev(differences), 5),
+            "standard_deviation": round(statistics.pstdev(signed_differences), 5),
             "largest_difference": round(max(differences), 4),
             "days_only_the_ecb_publishes": len(set(ecb_rate) - set(fed_rate)),
             "days_only_the_fed_publishes": len(set(fed_rate) - set(ecb_rate)),
