@@ -1296,7 +1296,7 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" } },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
 wheels = [
@@ -1371,7 +1371,7 @@ resolution-markers = [
     "python_full_version >= '3.12' and python_full_version < '3.15'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" } },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7e/74/66de6258867beb2ef08f35f9f2ac017a52cacd5081714d239ff1a442d458/scipy-1.18.1.tar.gz", hash = "sha256:52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307", size = 30781235, upload-time = "2026-08-21T23:28:50.599Z" }
 wheels = [
@@ -1439,7 +1439,7 @@ wheels = [
 
 [[package]]
 name = "soda-core"
-version = "4.22.0"
+version = "4.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1451,23 +1451,23 @@ dependencies = [
     { name = "sqlglot" },
     { name = "tabulate", extra = ["widechars"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/99/1ba661bc5c17e188d4ce72bb6b6eedb00b2be9da1a09710e8d4e367b9ad9/soda_core-4.22.0.tar.gz", hash = "sha256:6669d98ac4250f23dcd4b81926d64ba94321bdb10ad6c07b9da5a80f85a098b7", size = 207728, upload-time = "2026-08-25T12:51:14.235Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/68/87c777083c0bd34523cb54d5cb1fb2b647f022e59c624eb1af46a2991ecc/soda_core-4.23.0.tar.gz", hash = "sha256:de28c076544c2129cc5519c16282e4bc20b32d406f4bbdd8a732875e4a708000", size = 213694, upload-time = "2026-09-01T13:38:59.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/7d/6bb96154441a8a77c46a64a656b0018ea402e6d67bad199c14fba9aa9e3f/soda_core-4.22.0-py3-none-any.whl", hash = "sha256:c837e3320941b56b0b81ccca727a3dfabaa62c828fd232fd8f1cd1450d554fd5", size = 253488, upload-time = "2026-08-25T12:51:12.899Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/97/191d47e3bf268c75c862b953ca45d48eb43506a6e1c57a08eb5daa2d27e0/soda_core-4.23.0-py3-none-any.whl", hash = "sha256:b4b905d601efdff0c0c1b917603444b8e5e4f3b3a41a4b57a5205702b1fd2908", size = 259519, upload-time = "2026-09-01T13:38:58.731Z" },
 ]
 
 [[package]]
 name = "soda-duckdb"
-version = "4.22.0"
+version = "4.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "duckdb" },
     { name = "pytz" },
     { name = "soda-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/21/5b07ea5bf3145a286ea158f47c155662ccece0c6a6eecf53b6ea2a91dbdb/soda_duckdb-4.22.0.tar.gz", hash = "sha256:0600cabaae5bac9de619e8dc071c7666809f339792549c63aef2ddab1f801231", size = 6329, upload-time = "2026-08-25T12:50:55.674Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/cd/03ffe680072449bccd1dd2f865c4bb7b91988e51d93cb41c8def2c31b93b/soda_duckdb-4.23.0.tar.gz", hash = "sha256:2df0bbd8994125167b3222533c1c845979df7dcba6e63abace3c5bb310e579b6", size = 6299, upload-time = "2026-09-01T13:38:45.173Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/8e/5f119e32c6d1d9efb0dc8529b6f8ff5242f9c9c771c7763bf13ffcafda1f/soda_duckdb-4.22.0-py3-none-any.whl", hash = "sha256:d561230490e75fdb587ea5a1b0582a7c66dba86b2e8d84d068688e16fb04aa42", size = 7307, upload-time = "2026-08-25T12:50:54.85Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/ad/2a654105de4f8064aeee319eac70ad90b6b6e0e05c070e095a072d92c424/soda_duckdb-4.23.0-py3-none-any.whl", hash = "sha256:d3099541f0b9da88b74e0a02f6396b718811f680ef65611873d13b79e5f9921f", size = 7251, upload-time = "2026-09-01T13:38:44.423Z" },
 ]
 
 [[package]]
